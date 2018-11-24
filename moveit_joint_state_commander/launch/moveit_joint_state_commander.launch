@@ -1,0 +1,5 @@
+<launch>
+    <arg name="robot_name" default="vs060" />
+    <node pkg="moveit_joint_state_commander" type="moveit_joint_state_interface.py" name="moveit_joint_state_commander" args="joint_states:=/$(arg robot_name)/joint_states">
+    </node>
+</launch>
