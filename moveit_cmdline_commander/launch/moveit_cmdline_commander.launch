@@ -1,0 +1,11 @@
+
+<launch>
+  <arg name="robot_name" default="vs060" />
+  <node name="moveit_cmdline_interface" pkg="moveit_cmdline_commander" type="moveit_cmdline_interface.py" respawn="false" output="screen" 
+  args="joint_states:=/$(arg robot_name)/joint_states">
+  </node>
+
+
+</launch>
+
+
