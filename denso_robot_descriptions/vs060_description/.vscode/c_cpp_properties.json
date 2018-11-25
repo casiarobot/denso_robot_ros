@@ -1,0 +1,19 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/opt/ros/kinetic/include",
+        "/home/poyuchen/catkin_ws/src/denso_robot_ros/bcap_core/include",
+        "/home/poyuchen/catkin_ws/src/denso_robot_ros/denso_robot_control/include",
+        "/home/poyuchen/catkin_ws/src/denso_robot_ros/denso_robot_core/include",
+        "/home/poyuchen/catkin_ws/src/denso_robot_ros/bcap_service/include",
+        "/usr/include"
+      ],
+      "name": "Linux"
+    }
+  ]
+}

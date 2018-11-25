@@ -344,4 +344,71 @@
         </plugin>
       </sensor>
     </gazebo>
+
+	<!-- Calibration pattern link -->
+	<!-- <link name="pattern_link">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.18 0.22 0.03"/>
+			</geometry>
+			<material name="gray">
+            	<color rgba="0.2 0.2 0.2 1.0"/>
+        	</material>
+		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.18 0.22 0.03"/>
+			</geometry>
+		</collision>
+
+		<inertial>
+			<mass value="1e-5" />
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+		</inertial>
+	</link> -->
+
+	<!-- <joint name="pattern_joint" type="fixed">
+		<axis xyz=" 0 0" />
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<parent link="world"/>
+		<child link="pattern_link"/>
+	</joint> -->
+
+
+
+
+
+	<link name="pattern">
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="package://denso_robot_descriptions/vs060_description/test2.dae" scale="1 1 1" />
+			</geometry>
+			<geometry>
+				<box size="0.22 0.18 0.002"/> 
+			</geometry>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<box size="0.22 0.18 0.002"/> 
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="1" />
+			<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000" />
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+		</inertial>
+	</link>
+
+	<joint name="joint_pattern" type="fixed">
+		<parent link="world" />
+		<child link="pattern" />
+		<origin rpy="0.000000 0.000000 0.000000" xyz="1.700000 1.000000 0.03" />
+	</joint>
+
 </robot>
