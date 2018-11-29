@@ -1,5 +1,5 @@
 <package>
-  <name>moveit_commander</name>
+  <name>moveit_cmdline_commander</name>
   <version>0.9.15</version>
   <description>Python interfaces to MoveIt</description>
 

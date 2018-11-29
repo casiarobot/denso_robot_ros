@@ -16,4 +16,9 @@
     <arg name="send_format" value="$(arg send_format)" />
     <arg name="recv_format" value="$(arg recv_format)" />
   </include>
+
+  <!-- <include file="$(find moveit_cmdline_commander
+)/launch/moveit_cmdline_commander.launch">
+    <arg name="robot_name" value="vs060"/>
+  </include> -->
 </launch>

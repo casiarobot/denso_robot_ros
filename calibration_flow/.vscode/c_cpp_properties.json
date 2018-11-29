@@ -1,0 +1,16 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/opt/ros/kinetic/include",
+        "/home/poyuchen/denso_robot_ws/src/moveit_python_commander/include",
+        "/usr/include"
+      ],
+      "name": "Linux"
+    }
+  ]
+}
