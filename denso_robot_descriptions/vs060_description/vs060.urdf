@@ -279,7 +279,7 @@
 
 	<joint name="camera_joint" type="fixed">
 		<axis xyz="1 0 0" />
-		<origin xyz="0 0 0.05" rpy="0 -1.5708 0"/>
+		<origin xyz="0 0 0.05" rpy="0 -1.5707963 0"/>
 		<parent link="J6"/>
 		<child link="camera_link"/>
 	</joint>
@@ -289,7 +289,7 @@
 	<joint name="camera_optical_joint" type="fixed">
 		<!-- these values have to be these values otherwise the gazebo camera image
 			won't be aligned properly with the frame it is supposedly originating from -->
-		<origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+		<origin xyz="0 0 0" rpy="-1.5707963 0 -1.5707963"/>
 		<parent link="camera_link"/>
 		<child link="camera_link_optical"/>
 	</joint>
@@ -303,7 +303,7 @@
         <update_rate>30.0</update_rate>
 		<visualize>true</visualize>
         <camera>
-          	<horizontal_fov>0.7029</horizontal_fov>
+          	<horizontal_fov>0.70288959</horizontal_fov>
 			<image>
 				<width>2592</width>
 				<height>1944</height>
@@ -370,7 +370,7 @@
 	<joint name="joint_pattern" type="fixed">
 		<parent link="world" />
 		<child link="pattern" />
-		<origin rpy="0.000000 0.000000 0.000000" xyz="0.500000 0.000000 0.001" />
+		<origin rpy="0.000000 0.000000 1.5707963" xyz="0.500000 0.000000 0.001" />
 	</joint>
 
 	<!-- Add emissive light in pattern self -->
