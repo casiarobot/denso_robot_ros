@@ -3,13 +3,15 @@
 import sys
 import copy
 import rospy
+from math import pi
 import moveit_commander
+from moveit_commander.conversions import pose_to_list
 import moveit_msgs.msg
 import geometry_msgs.msg
-from math import pi
 from std_msgs.msg import String
-from moveit_commander.conversions import pose_to_list
-
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
 
 def all_close(goal, actual, tolerance):
   """
@@ -144,17 +146,60 @@ class MoveGroupInteface(object):
     current_pose = self.group.get_current_pose().pose
     return all_close(pose_goal, current_pose, 0.01)
 
+class camera_shooter:
+    def __init__(self):
+        self.bridge = CvBridge()
+        self.image_topic = "/arm_sensor/camera/image_raw"
 
+    def trigger(self, imgName=None):
+      '''
+      The image will save to $ROS_HOME directory, or 
+      you can modify it by node "cwd" attribute
+      '''
+      data = rospy.wait_for_message(self.image_topic, Image)
+      try:
+          cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+      except CvBridgeError as e:
+          print(e)
+      else:
+          if imgName is not None:
+            print("Save an image!")
+            print("filename: {}".format(imgName))
+            cv2.imwrite(imgName, cv_image)
+          return cv_image
+
+    def image_stream():
+        self.image_sub = rospy.Subscriber(self.image_topic, Image, self.callback)
+
+    def callback(self, data):
+        print("Received an image!")
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        except CvBridgeError as e:
+            print(e)
+        else:
+            # Save your OpenCV2 image as a jpeg 
+            print("Save an image!")
+            cv2.imshow('img', cv_image)
+            cv2.waitKey()
+            cv2.imwrite('cimage.png', cv_image)
+  
 def main():
   try:
     MoveGroup = MoveGroupInteface()
+    camera = camera_shooter()
 
-    print "============ Press `Enter` to execute a movement using a pose goal ..."
+    image = camera.trigger('img/init.png')
+    print("============ Press `Enter` to execute a movement using a pose goal ...")
     # raw_input()
     goal = (0.5, 0, 0.3875, 0, -1, 0, 0)
     MoveGroup.go_to_pose_goal(goal)
 
-    print "============ Calibration process complete!"
+    print("============ Press `Enter` to execute camera trigger to save image ...")
+    raw_input()
+    image = camera.trigger('img/center.png')
+
+    print("============ Calibration process complete!")
   except rospy.ROSInterruptException:
     return
   except KeyboardInterrupt:

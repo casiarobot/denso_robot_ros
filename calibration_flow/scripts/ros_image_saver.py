@@ -36,7 +36,7 @@ class camera_shooter:
 
 def main():
     shooter = camera_shooter()
-    # rospy.init_node('image_converter', anonymous=True)
+    rospy.init_node('image_converter', anonymous=True)
     try:
         # rospy.spin()
         print('done')
