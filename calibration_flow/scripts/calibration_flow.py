@@ -3,6 +3,8 @@
 import sys
 import copy
 import rospy
+import numpy as np
+import quaternion
 from math import pi
 import moveit_commander
 from moveit_commander.conversions import pose_to_list
@@ -182,22 +184,23 @@ class camera_shooter:
             print("Save an image!")
             cv2.imshow('img', cv_image)
             cv2.waitKey()
-            cv2.imwrite('cimage.png', cv_image)
+            cv2.imwrite('cimage.bmp', cv_image)
   
 def main():
   try:
     MoveGroup = MoveGroupInteface()
     camera = camera_shooter()
 
-    image = camera.trigger('img/init.png')
+    image = camera.trigger('img/init.bmp')
     print("============ Press `Enter` to execute a movement using a pose goal ...")
     # raw_input()
-    goal = (0.5, 0, 0.3875, 0, -1, 0, 0)
+    goal = (0.53, -0.02, 0.5, 0, -1, 0, 0)
+    # goal = (0.5, 0, 1.0875, 0, -1, 0, 0)
     MoveGroup.go_to_pose_goal(goal)
 
     print("============ Press `Enter` to execute camera trigger to save image ...")
     raw_input()
-    image = camera.trigger('img/center.png')
+    image = camera.trigger('img/center.bmp')
 
     print("============ Calibration process complete!")
   except rospy.ROSInterruptException:
