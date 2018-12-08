@@ -194,7 +194,7 @@ def main():
     image = camera.trigger('img/init.bmp')
     print("============ Press `Enter` to execute a movement using a pose goal ...")
     # raw_input()
-    goal = (0.53, -0.02, 0.5, 0, -1, 0, 0)
+    goal = (0.52, -0.03, 0.5, 0, -1, 0, 0)
     # goal = (0.5, 0, 1.0875, 0, -1, 0, 0)
     MoveGroup.go_to_pose_goal(goal)
 
