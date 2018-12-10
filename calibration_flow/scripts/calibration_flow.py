@@ -14,6 +14,8 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
+import yaml
+import time
 
 def all_close(goal, actual, tolerance):
   """
@@ -187,6 +189,8 @@ class camera_shooter:
             cv2.imwrite('cimage.bmp', cv_image)
   
 def main():
+  POSE_GOAL_PATH = 'goal/ap_goal.yaml'
+
   try:
     MoveGroup = MoveGroupInteface()
     camera = camera_shooter()
@@ -199,8 +203,17 @@ def main():
     MoveGroup.go_to_pose_goal(goal)
 
     print("============ Press `Enter` to execute camera trigger to save image ...")
-    raw_input()
+    time.sleep(1)
     image = camera.trigger('img/center.bmp')
+
+    with open(POSE_GOAL_PATH) as f:
+      pose_goals = yaml.load(f)
+      print('Get pose goal from yaml file.')
+    for i, goal in enumerate(pose_goals):
+      MoveGroup.go_to_pose_goal(goal)
+      print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
+      time.sleep(1)
+      image = camera.trigger('img/ap{}.bmp'.format(i))
 
     print("============ Calibration process complete!")
   except rospy.ROSInterruptException:
