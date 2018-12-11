@@ -198,7 +198,7 @@ def main():
     image = camera.trigger('img/init.bmp')
     print("============ Press `Enter` to execute a movement using a pose goal ...")
     # raw_input()
-    goal = (0.52, -0.03, 0.5, 0, -1, 0, 0)
+    goal = (0.3, -0.03, 0.5, 0, -1, 0, 0)
     # goal = (0.5, 0, 1.0875, 0, -1, 0, 0)
     MoveGroup.go_to_pose_goal(goal)
 
@@ -213,7 +213,7 @@ def main():
       MoveGroup.go_to_pose_goal(goal)
       print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
       time.sleep(1)
-      image = camera.trigger('img/ap{}.bmp'.format(i))
+      image = camera.trigger('img/ap{}.bmp'.format(i+1))
 
     print("============ Calibration process complete!")
   except rospy.ROSInterruptException:

@@ -124,23 +124,17 @@ def as_ROSgoal(Homo_mats):
 if __name__ =='__main__':
     import os.path
     WD = 0.400 # work distence(m)
-    pose_amount = 6 # Amount of camera pose
-    phi = 15 # polarangle 
+    pose_amount = 12 # Amount of camera pose
+    phi = 25 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
-    CAMERA_POSE_PATH = 'autoPose/data/camera_posef.yaml'
+    CAMERA_POSE_PATH = 'autoPose/data/camera_pose.yaml'
     ROS_GOAL_PATH = 'goal/ap_goal.yaml'
 
-    if os.path.exists(CAMERA_POSE_PATH):
-        with open(CAMERA_POSE_PATH) as f:
-            camOrientations = np.array(yaml.load(f))
-            print('Get camera pose data from yaml file.')
-
-    else:
-        camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
-                            theta_interval, CAMERA_POSE_PATH)                    
-        with open(CAMERA_POSE_PATH, 'w') as f:
-            yaml.dump(camOrientations.tolist(), f, default_flow_style=False)
-            print('Save the camera pose data to yaml data file.')
+    camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
+                                    theta_interval, CAMERA_POSE_PATH)                    
+    with open(CAMERA_POSE_PATH, 'w') as f:
+        yaml.dump(camOrientations.tolist(), f, default_flow_style=False)
+        print('Save the camera pose data to yaml data file.')
     
     # Verify data 
     World = frame3D.Frame(np.matlib.identity(4))
@@ -171,9 +165,9 @@ if __name__ =='__main__':
     # Flange.plot_frame(ax, 'init_flange')
 
     # {Base}
-    cmd_Z = orientation.asRad((0.5, 0, 0, 0, 0, 90)).cmd()
+    cmd_Z = orientation.asRad((0.3, 0, 0, 0, 0, 90)).cmd()
     Z = Base.transform(cmd_Z, refFrame=World.pose)
-    cmd_Z = orientation.asRad((0, 0.5, 0, 0, 0, -90)).cmd()
+    cmd_Z = orientation.asRad((0, 0.3, 0, 0, 0, -90)).cmd()
     Base.transform(cmd_Z, refFrame=Pattern.pose)
     Base.plot_frame(ax, 'Base')
 
