@@ -172,7 +172,7 @@ class camera_shooter:
             cv2.imwrite(imgName, cv_image)
           return cv_image
 
-    def image_stream():
+    def image_stream(self):
         self.image_sub = rospy.Subscriber(self.image_topic, Image, self.callback)
 
     def callback(self, data):
@@ -190,7 +190,7 @@ class camera_shooter:
   
 def main():
   POSE_GOAL_PATH = 'goal/ap_goal.yaml'
-
+  CC_GOAL_PATH = 'goal/cc_goal.yaml'
   try:
     MoveGroup = MoveGroupInteface()
     camera = camera_shooter()
@@ -206,14 +206,23 @@ def main():
     time.sleep(1)
     image = camera.trigger('img/center.bmp')
 
-    with open(POSE_GOAL_PATH) as f:
+    # with open(POSE_GOAL_PATH) as f:
+    #   pose_goals = yaml.load(f)
+    #   print('Get pose goal from yaml file.')
+    # for i, goal in enumerate(pose_goals):
+    #   MoveGroup.go_to_pose_goal(goal)
+    #   print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
+    #   time.sleep(1)
+    #   image = camera.trigger('img/ap{}.bmp'.format(i+1))
+
+    with open(CC_GOAL_PATH) as f:
       pose_goals = yaml.load(f)
       print('Get pose goal from yaml file.')
     for i, goal in enumerate(pose_goals):
       MoveGroup.go_to_pose_goal(goal)
       print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
       time.sleep(1)
-      image = camera.trigger('img/ap{}.bmp'.format(i+1))
+      image = camera.trigger('img/cc{}.bmp'.format(i+1))
 
     print("============ Calibration process complete!")
   except rospy.ROSInterruptException:
@@ -223,3 +232,5 @@ def main():
 
 if __name__ == '__main__':
   main()
+  
+
