@@ -213,7 +213,7 @@ def main():
     #   MoveGroup.go_to_pose_goal(goal)
     #   print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
     #   time.sleep(1)
-    #   image = camera.trigger('img/ap{}.bmp'.format(i+1))
+    #   image = camera.trigger('img/ap{}.bmp'.format(str(i+1).zfill(2)))
 
     with open(CC_GOAL_PATH) as f:
       pose_goals = yaml.load(f)
@@ -222,7 +222,7 @@ def main():
       MoveGroup.go_to_pose_goal(goal)
       print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
       time.sleep(1)
-      image = camera.trigger('img/cc{}.bmp'.format(i+1))
+      image = camera.trigger('img/cc{}.bmp'.format(str(i+1).zfill(2)))
 
     print("============ Calibration process complete!")
   except rospy.ROSInterruptException:
