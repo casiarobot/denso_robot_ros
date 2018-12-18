@@ -103,7 +103,7 @@ def main(SOURCE_IMAGE_PATH, ROS_GOAL_PATH, output_pattern_img=False):
     cmd_Z1 = orientation.asRad((0.3, 0, 0, 0, 0, 90)).cmd()
     Pattern.transform(cmd_Z1, refFrame=Base.pose)
     Pattern.plot_frame(ax, 'Pattern')
-    cmd_Z2 = orientation.asRad((0.3+0.11, -0.09, 0, 0, 0, 90)).cmd()
+    cmd_Z2 = orientation.asRad((0.3-0.09, 0.11, 0, 0, 0, -90)).cmd()
     Z = Image.transform(cmd_Z2, refFrame=Base.pose)
     Image.plot_frame(ax, 'Image')
 
@@ -111,13 +111,13 @@ def main(SOURCE_IMAGE_PATH, ROS_GOAL_PATH, output_pattern_img=False):
     cmd_A0 = orientation.asRad((0, 0, WD, 0, 180, 0)).cmd()
     A0 = Camera.transform(cmd_A0, refFrame=World.pose)
     Camera.transform(cmd_A0, refFrame=Pattern.pose)
-    Camera.plot_frame(ax, 'init_camera')
+    # Camera.plot_frame(ax, 'init_camera')
 
     # {Flange}
     cmd_X = orientation.asRad((0, 0, -0.050, 0, 0, 90)).cmd()
     X = Flange.transform(cmd_X, refFrame=World.pose)
     Flange.transform(cmd_X, refFrame=Camera.pose)
-    Flange.plot_frame(ax, 'init_flange')
+    # Flange.plot_frame(ax, 'init_flange')
 
     # Verify data 
     As = ext_mat
@@ -127,7 +127,7 @@ def main(SOURCE_IMAGE_PATH, ROS_GOAL_PATH, output_pattern_img=False):
         Bs[i] = Z*A*X
         # {Flange}
         Flange.transform_by_rotation_mat(Bs[i], refFrame=Base.pose)
-        Flange.plot_frame(ax, '')
+        # Flange.plot_frame(ax, '')
         # {Camera}
         Camera.transform_by_rotation_mat(A, refFrame=Image.pose)
         Camera.plot_frame(ax, '') 

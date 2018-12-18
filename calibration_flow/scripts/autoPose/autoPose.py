@@ -187,7 +187,7 @@ if __name__ =='__main__':
         Camera.transform(cmd_A, refFrame=Pattern.pose)
         Camera.plot_frame(ax, '')    
         Flange.transform(cmd_X, refFrame=Camera.pose)
-        Flange.plot_frame(ax, '')
+        # Flange.plot_frame(ax, '')
 
         # {Test Flange calculate from Z*A*X}
         Bs[i] = Z*As[i]*X
