@@ -1,11 +1,17 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 78
+    Help Height: 0
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
-      Splitter Ratio: 0.5
-    Tree Height: 121
+      Expanded:
+        - /MotionPlanning1
+        - /MotionPlanning1/Scene Robot1/Links1
+        - /MotionPlanning1/Planned Path1/Links1
+        - /Camera1
+        - /camera_Axes1
+        - /flange_Axes1
+      Splitter Ratio: 0.497435898
+    Tree Height: 555
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -109,6 +115,11 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          pattern:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           world:
             Alpha: 1
             Show Axes: false
@@ -117,7 +128,7 @@ Visualization Manager:
         Robot Alpha: 0.5
         Robot Color: 150; 50; 150
         Show Robot Collision: false
-        Show Robot Visual: true
+        Show Robot Visual: false
         Show Trail: false
         State Display Time: 0.05 s
         Trail Step Size: 1
@@ -202,6 +213,11 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+          pattern:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           world:
             Alpha: 1
             Show Axes: false
@@ -225,7 +241,39 @@ Visualization Manager:
         Grid: true
         MotionPlanning: true
         Value: true
+        camera_Axes: true
+        flange_Axes: true
+        pattern_Axes: true
+        world_Axes: true
       Zoom Factor: 1
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.200000003
+      Name: pattern_Axes
+      Radius: 0.00999999978
+      Reference Frame: pattern
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.200000003
+      Name: camera_Axes
+      Radius: 0.00999999978
+      Reference Frame: camera_link_optical
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.200000003
+      Name: flange_Axes
+      Radius: 0.00999999978
+      Reference Frame: J6
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.200000003
+      Name: world_Axes
+      Radius: 0.00999999978
+      Reference Frame: world
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 238; 238; 238
@@ -242,7 +290,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 2.99650002
+      Distance: 1.92171383
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -257,10 +305,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.509796977
+      Pitch: 0.80979681
       Target Frame: base_link
       Value: XYOrbit (rviz)
-      Yaw: 5.65994978
+      Yaw: 4.68499613
     Saved: ~
 Window Geometry:
   Camera:
@@ -274,7 +322,7 @@ Window Geometry:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000031b000003cbfc0200000007fb000000100044006900730070006c006100790073000000002e0000010e000000dd00fffffffb0000000800480065006c00700000000342000000bb0000000000000000fb0000000a0056006900650077007300000003b0000000b0000000b700fffffffb0000000c00430061006d006500720061010000002e000002070000001800fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000001800000018fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067010000023c000001bd000001b100ffffff0000040d000003cb00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000010000000000000312000003cbfc0200000007fb000000100044006900730070006c006100790073010000002e00000272000000dd00fffffffb0000000800480065006c00700000000342000000bb0000000000000000fb0000000a0056006900650077007300000003b0000000b0000000b700fffffffb0000000c00430061006d00650072006101000002a7000001520000001800fffffffb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e00670100000374000001890000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000005000fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067000000023c000001bd000001b100ffffff00000416000003cb00000001000000020000000100000002fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Views:
     collapsed: false
   Width: 1839

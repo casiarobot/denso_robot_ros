@@ -78,8 +78,6 @@ def get_photo_orientation_by_given_shoot_angle(guess_orientation, refFrame, foca
 
     res = scipy.optimize.leastsq(objFun_normal_vector, guess_orientation, 
                         args=(position_1, refFrame), full_output=1)
-    print(res[2]['fvec'])
-    # print(res[0])
     (Rx, Ry, Rz) = res[0] 
     (a, b, c, _) = position_1
     orientation_1 = [a, b, c, Rx, Ry, Rz]
@@ -97,7 +95,6 @@ def main_calculateCameraPose(WD, pose_amount, polar_ang, itvl_azimuthal, CAMERA_
 
     # World.plot_frame(ax, '')
     for ind, theta in enumerate(thetas) :
-        print(theta)
         orientation_2 = get_photo_orientation_by_given_shoot_angle(X0,\
                      World.pose, WD, np.radians(polar_ang), np.radians(theta))
         X0 = orientation_2[3:6]
@@ -130,6 +127,9 @@ if __name__ =='__main__':
     CAMERA_POSE_PATH = '3_autoPose/data/camera_pose.yaml'
     ROS_GOAL_PATH = 'goal/ap_goal.yaml'
     Bs_PATH = 'goal/Bs.yaml'
+    X_PATH = 'goal/X.yaml'
+    Z_PATH = 'goal/Z.yaml'
+    Z2_PATH = 'goal/Z2.yaml'
 
     camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
                                     theta_interval, CAMERA_POSE_PATH)                    
@@ -140,6 +140,7 @@ if __name__ =='__main__':
     # Verify data 
     World = frame3D.Frame(np.matlib.identity(4))
     Pattern = frame3D.Frame(World.pose)
+    Image = frame3D.Frame(Pattern.pose)
     Camera = frame3D.Frame(Pattern.pose)
     Flange = frame3D.Frame(Pattern.pose)
     Base = frame3D.Frame(Pattern.pose)
@@ -152,6 +153,7 @@ if __name__ =='__main__':
     #################
     # {Pattern as World}
     Pattern.plot_frame(ax, 'Pattern')
+
 
     # {Camera}
     cmd_A0 = orientation.asRad((0, 0, WD, 0, 180, 0)).cmd()
@@ -171,6 +173,14 @@ if __name__ =='__main__':
     cmd_Z = orientation.asRad((0, 0.3, 0, 0, 0, -90)).cmd()
     Base.transform(cmd_Z, refFrame=Pattern.pose)
     Base.plot_frame(ax, 'Base')
+
+    # {Image}
+    cmd_w = orientation.asRad((0.09, 0.11, 0, 0, 0, 180)).cmd()
+    w = Image.transform(cmd_w, refFrame=World.pose)
+    Z2 = Z*w
+    # Image.transform(cmd_w, refFrame=Pattern.pose)
+    Image.transform_by_rotation_mat(Z2, refFrame=Base.pose)
+    Image.plot_frame(ax, 'Image')
 
     # {Test Flange calculate from Z*A*X}
     B = Z*A0*X
@@ -194,14 +204,26 @@ if __name__ =='__main__':
         Bs[i] = Z*As[i]*X
         # Flange_test.transform_by_rotation_mat(Bs[i], refFrame=Base.pose)
         # Flange_test.plot_frame(ax, 'Test')
-        print('X:{}'.format(X))
-        print('Z:{}'.format(Z))
-        print('A0:{}'.format(A0))
-        print('A:{}'.format(As[0]))
+        # print('X:{}'.format(X))
+        # print('Z:{}'.format(Z))
+        # print('A0:{}'.format(A0))
+        # print('A:{}'.format(As[0]))
 
     with open(Bs_PATH, 'w') as f:
         yaml.dump(Bs.tolist(), f, default_flow_style=False)
         print('Save the Bs to yaml data file.')
+    
+    with open(X_PATH, 'w') as f:
+        yaml.dump(X.tolist(), f, default_flow_style=False)
+        print('Save the X to yaml data file.')
+    
+    with open(Z_PATH, 'w') as f:
+        yaml.dump(Z.tolist(), f, default_flow_style=False)
+        print('Save the Z to yaml data file.')
+    
+    with open(Z2_PATH, 'w') as f:
+        yaml.dump(Z2.tolist(), f, default_flow_style=False)
+        print('Save the Z2 to yaml data file.')
 
     #################
     # Save as moveit command

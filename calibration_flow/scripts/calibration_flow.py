@@ -206,14 +206,14 @@ def main():
     time.sleep(1)
     image = camera.trigger('img/center.bmp')
 
-    # with open(POSE_GOAL_PATH) as f:
-    #   pose_goals = yaml.load(f)
-    #   print('Get pose goal from yaml file.')
-    # for i, goal in enumerate(pose_goals):
-    #   MoveGroup.go_to_pose_goal(goal)
-    #   print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
-    #   time.sleep(1)
-    #   image = camera.trigger('img/ap{}.bmp'.format(str(i+1).zfill(2)))
+    with open(POSE_GOAL_PATH) as f:
+      pose_goals = yaml.load(f)
+      print('Get pose goal from yaml file.')
+    for i, goal in enumerate(pose_goals):
+      MoveGroup.go_to_pose_goal(goal)
+      print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
+      time.sleep(1)
+      image = camera.trigger('img/ap{}.bmp'.format(str(i+1).zfill(2)))
 
     with open(CC_GOAL_PATH) as f:
       pose_goals = yaml.load(f)

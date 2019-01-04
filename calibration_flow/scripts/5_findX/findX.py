@@ -6,14 +6,25 @@ import numpy.matlib
 import quaternion
 import yaml
 
-def __get_AB__(A_PATH, B_PATH):
+
+
+def __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH):
     with open(A_PATH) as f:
       As = np.array(yaml.load(f))
       print('Get As from yaml file.')
     with open(B_PATH) as f:
       Bs = np.array(yaml.load(f))
       print('Get Bs from yaml file.')
-    return As, Bs
+    with open(X_PATH) as f:
+      X = np.array(yaml.load(f))
+      print('Get X from yaml file.')
+    with open(Z_PATH) as f:
+      Z = np.array(yaml.load(f))
+      print('Get Z from yaml file.')
+    with open(Z2_PATH) as f:
+      Z2 = np.array(yaml.load(f))
+      print('Get Z2 from yaml file.')
+    return As, Bs, X, Z, Z2
 
 def __create_unit_vector__(thetaS, phiS, r=1):
     '''
@@ -71,14 +82,27 @@ def __solveXZ__(As, Bs):
 
     return HX, HZ
 
-def main(A_PATH, B_PATH):
-    As, Bs = __get_AB__(A_PATH, B_PATH)
+def test_solution(As, Bs, X, Z):
+    residual = np.zeros(len(As))
+    for i, (A, B) in enumerate(zip(As, Bs)):
+        residual[i] = np.linalg.norm(B - Z*A*X)
+
+    return residual
+
+def main(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH):
+    As, Bs, X, Z, Z2 = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH)
     HX, HZ = __solveXZ__(As, Bs)
-    print(HX)
-    print(HZ)
-    
+    # print(HX)
+    # print(HZ)
+    r = test_solution(As, Bs, X, HZ)
+    r2 = test_solution(As, Bs, X, Z2)
+    print(r)
+    print(r2)
 if __name__ == "__main__":
     A_PATH = 'goal/As.yaml'
     B_PATH = 'goal/Bs.yaml'
+    X_PATH = 'goal/X.yaml'
+    Z_PATH = 'goal/Z.yaml'
+    Z2_PATH = 'goal/Z2.yaml'
     
-    main(A_PATH, B_PATH)
+    main(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH)
