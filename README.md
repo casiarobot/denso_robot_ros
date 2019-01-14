@@ -237,5 +237,4 @@ Basic operation
 3. Connect your linux computer and RC8 control with ethernet cable. Then, change local IP in same LAN Network with RC8, `192.168.0.2` for example. Control robot by MoveIt framework, simply run
     ```
     roslaunch denso_robot_bringup vs6242_bringup.launch sim:=false ip_address:=192.168.0.1
-
     ```
