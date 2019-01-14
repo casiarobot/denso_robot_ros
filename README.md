@@ -162,9 +162,10 @@ There are three interface to control robot with [MoveIt](http://docs.ros.org/kin
 Add a pattern object to Gazebo
 ---
 1. Generate pattern texture from VISIO or OpenCV. Here is a example 
-![](doc/img/pattern.png =300x)
+   
+![](doc/img/pattern.png)
 
-1. Build pattern object(*.dae) with Blender
+1. Build pattern object(*.dae) with Blender 
     Install Blender from [website](https://builder.blender.org/download/) and here is [tutorial](
     https://www.youtube.com/watch?v=POWq9aeDLls)
 
