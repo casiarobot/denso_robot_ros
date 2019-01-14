@@ -74,7 +74,8 @@ Simulate a Denso robot in ROS environment
     ```
 - Check is there a directory in the path `/data/denso_ws`. if not, run those command to build a catkin workspace
     ```
-    mkdir -p /data/denso_ws/src/ros_home/img
+    sudo mkdir -p /data/denso_ws/src/ros_home/img
+    sudo chown -R $USER:$USER /data
     cd /data/denso_ws/
     catkin_make
     echo "source /data/denso_ws/devel/setup.bash" >> ~/.bashrc
@@ -82,7 +83,7 @@ Simulate a Denso robot in ROS environment
     ```
 - Pull the Denso ROS model by running:
     ```
-    cd /data/denso_ws_src
+    cd /data/denso_ws/src
     git clone https://github.com/solab-ntu/denso_robot_ros.git
     ```
 - Test it
