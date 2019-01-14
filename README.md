@@ -54,7 +54,7 @@ Simulate a Denso robot in ROS environment
     source /opt/ros/kinetic/setup.bash
 
     sudo mkdir -p /data/denso_ws/src/ros_home/img
-    sudo chown $USER:$USER /data
+    sudo chown -R $USER:$USER /data
     cd /data/denso_ws/
     catkin_make
     echo "source /data/denso_ws/devel/setup.bash" >> ~/.bashrc
