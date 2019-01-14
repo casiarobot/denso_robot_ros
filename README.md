@@ -1,7 +1,17 @@
 Introduce to ROS
 ===
 
-[TOC]
+- [Introduce to ROS](#introduce-to-ros)
+  - [Simulate a Denso robot in ROS environment](#simulate-a-denso-robot-in-ros-environment)
+    - [Install ROS and package](#install-ros-and-package)
+    - [Pull Denso model from github](#pull-denso-model-from-github)
+  - [Motion planning with MoveIt framework](#motion-planning-with-moveit-framework)
+  - [Add a pattern object to Gazebo](#add-a-pattern-object-to-gazebo)
+  - [Contorl real Denso robot](#contorl-real-denso-robot)
+    - [With Teaching Pendant](#with-teaching-pendant)
+    - [With Wincap III](#with-wincap-iii)
+    - [With C](#with-c)
+    - [With ROS](#with-ros)
 
 Simulate a Denso robot in ROS environment 
 ---
@@ -89,10 +99,10 @@ There are three interface to control robot with [MoveIt](http://docs.ros.org/kin
    roslaunch denso_robot_bringup vs060_bringup.launch
    ```
    There is a [moveit GUI plugin](http://docs.ros.org/kinetic/api/moveit_tutorials/html/doc/quickstart_in_rviz/quickstart_in_rviz_tutorial.html) in Rviz interface, just drag the end effector and excute robot as shown in the GIF
-![](https://i.imgur.com/kM0isQY.gif)
+![](doc/img/moveitGUI.gif)
 
 
-2. **Commander Scripting**
+1. **Commander Scripting**
     Use shell-like command interact with robot, first run the command in the new terminal windows,
    ```
    roslaunch moveit_cmdline_commander moveit_cmdline_commander.launch
@@ -133,7 +143,7 @@ There are three interface to control robot with [MoveIt](http://docs.ros.org/kin
 
     For a list of supported commands, you can type `help`. To exit the moveit_commander interface you can type `quit`.
 
-3. **Python interface**
+2. **Python interface**
 
    Run the command in the new terminal windows,
    ```
@@ -146,17 +156,17 @@ There are three interface to control robot with [MoveIt](http://docs.ros.org/kin
     1. The robot plans and moves its arm to the joint goal.
     2. The robot plans a path to a pose goal.
     3. The robot plans a Cartesian path.
-    5. The robot executes the Cartesian path plan.
+    4. The robot executes the Cartesian path plan.
 
 
 Add a pattern object to Gazebo
 ---
 1. Generate pattern texture from VISIO or OpenCV. Here is a example 
-![](https://i.imgur.com/2AuqTla.png =300x)
+![](doc/img/pattern.png =300x)
 
-2. Build pattern object(*.dae) with Blender
-    Install Blender from [website](https://builder.blender.org/download/) and here is tutorial:
-{%youtube POWq9aeDLls%}
+1. Build pattern object(*.dae) with Blender
+    Install Blender from [website](https://builder.blender.org/download/) and here is [tutorial](
+    https://www.youtube.com/watch?v=POWq9aeDLls)
 
     Finally, you should generate a pattern object in *.dae format, now we should add this object to the Denso Gazebo urdf model. (Make sure there is pattern.dae file and pattern.png texture in denso_robot_descriptions folder)
     ```
@@ -212,8 +222,8 @@ Contorl real Denso robot
 Basic operation
 
 ### With Wincap III
-1. Connect PC and RC8 control with ethernet cable. Then, change local IP in same LAN Network with RC8, `192.168.0.2` for example. Programming tutorial:
-{%youtube MAyrm8Ra5kw%}
+1. Connect PC and RC8 control with ethernet cable. Then, change local IP in same LAN Network with RC8, `192.168.0.2` for example. Programming [tutorial](https://www.youtube.com/watch?v=MAyrm8Ra5kw):
+
 
 ### With C#
 1. Install ORiN2 SDK and Visual Studio
