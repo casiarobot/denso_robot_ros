@@ -163,7 +163,8 @@ Add a pattern object to Gazebo
 ---
 1. Generate pattern texture from VISIO or OpenCV. Here is a example 
    
-![](doc/img/pattern.png)
+<img src="doc/img/pattern.png" height="300">
+
 
 1. Build pattern object(*.dae) with Blender 
     Install Blender from [website](https://builder.blender.org/download/) and here is [tutorial](
