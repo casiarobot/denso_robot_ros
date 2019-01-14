@@ -48,12 +48,13 @@ Simulate a Denso robot in ROS environment
     sudo rosdep init
     rosdep update
 
-    sudo apt-get install ros-kinetic-moveit
-    sudo apt-get install ros-kinetic-denso-robot-ros
+    sudo apt-get install -y ros-kinetic-moveit
+    sudo apt-get install -y ros-kinetic-denso-robot-ros
 
     source /opt/ros/kinetic/setup.bash
 
-    mkdir -p /data/denso_ws/src/ros_home/img
+    sudo mkdir -p /data/denso_ws/src/ros_home/img
+    sudo chown $USER:$USER /data
     cd /data/denso_ws/
     catkin_make
     echo "source /data/denso_ws/devel/setup.bash" >> ~/.bashrc
