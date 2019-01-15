@@ -85,7 +85,7 @@ Simulate a Denso robot in ROS environment
 - Pull the Denso ROS model by running:
     ```
     cd /data/denso_ws/src
-    sudo apt-get intsall -y git
+    sudo apt-get install -y git
     git clone https://github.com/solab-ntu/denso_robot_ros.git
     ```
 - Test it
