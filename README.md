@@ -29,7 +29,7 @@ Simulate a Denso robot in ROS environment
     sudo apt-get install -y python-pip
     sudo pip2 install --upgrade pip
     ```
-- Install ROS Kinetic  and MoveIt package, save the content to the file `install_bash.sh`, and run `bash install_bash.sh` in terminal.
+- Install ROS Kinetic  and MoveIt package, save the content to the file `install_ros.sh`, and run `bash install_ros.sh` in terminal.
 
     ```
     #!/bin/bash
