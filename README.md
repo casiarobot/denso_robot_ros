@@ -65,6 +65,7 @@ Simulate a Denso robot in ROS environment
 
 
 ### Pull Denso model from github
+- Close termial and restart it
 - Now we need to remove the original denso model and pull the new one from github
     ```
     cd /opt/ros/kinetic/share    # Change to ROS directory
