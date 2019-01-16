@@ -28,12 +28,20 @@
   </group>  
 
   <group unless="$(arg sim)">
+    <!-- Denso robot -->
     <include file="$(find denso_robot_control)/launch/denso_robot_control.launch">
       <arg name="robot_name" value="$(arg robot_name)" />
       <arg name="ip_address" value="$(arg ip_address)" />
       <arg name="send_format" value="$(arg send_format)" />
       <arg name="recv_format" value="$(arg recv_format)" />
     </include>
+
+    <!-- Basler camera -->
+    <arg name="basler_config_file" default="$(find pylon_camera)/config/default.yaml" />
+    <node name="camera" pkg="pylon_camera" type="pylon_camera_node" output="screen"
+          respawn="false">
+        <rosparam command="load" file="$(arg basler_config_file)" />
+    </node>
   </group>  
 
 
