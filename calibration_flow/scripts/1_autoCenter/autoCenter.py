@@ -67,10 +67,13 @@ def get_cam_parameter(camBrand, FOV):
 
     return (cmtx, Mpx2mm)
 
-def as_ROSgoal(dq, init_goal):
+def convert_center_ROSgoal(dq, Init_GOAL):
     '''
     ROS goal: goal = (x, y, z, qx, qy, qz, qw)
     '''
+    with open(Init_GOAL) as f:
+        init_goal = np.array(yaml.load(f), dtype='float')
+
     q0 = np.quaternion(init_goal[6], init_goal[3], init_goal[4], init_goal[5])
     H = np.identity(4)
     H[3,0] = init_goal[0] + dq[0]
@@ -81,17 +84,7 @@ def as_ROSgoal(dq, init_goal):
     goal = np.array([H[3,0], H[3,1], H[3,2], q.x, q.y, q.z, q.w])
     return goal
 
-def main(DEBUG):
-    # PATH SETTING
-    CONFIG = 'config.yaml'
-    with open(CONFIG) as f:
-        path = yaml.load(f)
-
-    BASE = path['ACenter'] if DEBUG else path['ROOT']
-    IMAGE_PATH = BASE + 'img/init.bmp'
-    AC_GOAL = BASE + 'goal/ac_goal.yaml'
-    Init_GOAL = BASE + 'goal/init_goal.yaml'
-
+def compute_compensation(BASE, IMAGE_PATH):
     # Generate ChArUco pattern
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
     board = cv2.aruco.CharucoBoard_create(11, 9, 0.020, 0.010, dictionary)
@@ -113,16 +106,46 @@ def main(DEBUG):
     dU = np.array(gray.shape)[::-1]/2 - ptCen
     dQ = Mpx2mm*dU[::-1]
     
+    # convert unit to meter
     dq = np.array([dQ[0]/1000, dQ[1]/1000, angle]) # dx, dy, angle
-    print(dq)
+    
+    return dq
 
-    with open(Init_GOAL) as f:
-        init_goal = np.array(yaml.load(f), dtype='float')
+def main(DEBUG):
+    # PATH SETTING
+    CONFIG = 'config.yaml'
+    with open(CONFIG) as f:
+        path = yaml.load(f)
+        
+    BASE = path['ACenter'] if DEBUG else path['ROOT']
+    AF_BASE = path['AFocus'] if DEBUG else path['ROOT']
+    IMAGE_PATH = BASE + 'img/init.bmp'
+    Init_GOAL = BASE + 'goal/init_goal.yaml'
+    AC_GOAL = BASE + 'goal/ac_goal.yaml'
+    AF_GOAL = AF_BASE + 'goal/af_goal.yaml'
 
-    goal = as_ROSgoal(dq, init_goal)
+    # Compute compensation in meter
+    dq = compute_compensation(BASE, IMAGE_PATH)
+
+    # Convert compensation to ROS goal
+    ac_goal = convert_center_ROSgoal(dq, Init_GOAL)
+    
+    # Set auto focus goal moved along z-axis of center goal
+    n = 11 # number of goal
+    z = 0.04 # interval of movement
+    af_goals = np.ones((n, 7)) * ac_goal
+    for ind, dz in enumerate(np.linspace(-z/2, z/2, 11)):
+        af_goals[ind, 2] = ac_goal[2] + dz
+    
+    # print(dq)
+    # print(ac_goal)
+    # print(af_goals)
+
     with open(AC_GOAL, 'w') as f:
-        yaml.dump(goal.tolist(), f, default_flow_style=False)
-        print('Save the ac goal to yaml data file.')
+        yaml.dump(ac_goal.tolist(), f, default_flow_style=False)
+    
+    with open(AF_GOAL, 'w') as f:
+        yaml.dump(af_goals.tolist(), f, default_flow_style=False)
 
 if __name__ == '__main__':
     '''

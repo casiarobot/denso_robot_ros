@@ -6,13 +6,10 @@
         "limitSymbolsToIncludedHeaders": true
       },
       "includePath": [
+        "/data/catkin_ws/devel/include",
         "/data/denso_ws/devel/include",
         "/opt/ros/kinetic/include",
-        "/data/denso_ws/src/denso_robot_ros/bcap_core/include",
-        "/data/denso_ws/src/denso_robot_ros/bcap_service/include",
-        "/data/denso_ws/src/denso_robot_ros/denso_robot_core/include",
-        "/data/denso_ws/src/denso_robot_ros/pylon_camera/include",
-        "/data/denso_ws/src/denso_robot_ros/warehouse_ros/include",
+        "/data/catkin_ws/src/pylon_camera/include",
         "/usr/include"
       ],
       "name": "Linux"

@@ -55,6 +55,8 @@ def main(DEBUG, output_pattern_img=False):
         path = yaml.load(f)
     
     BASE = path['CCalibration'] if DEBUG else path['ROOT']
+    AF_BASE = path['AFocus'] if DEBUG else path['ROOT']
+    BF_GOAL = AF_BASE + 'goal/bf_goal.yaml'
     AP_BASE = path['APose'] if DEBUG else path['ROOT']
     IMAGE_PATH = AP_BASE + 'img/ap*.bmp'
     CC_GOAL = BASE + 'goal/cc_goal.yaml'
@@ -104,6 +106,10 @@ def main(DEBUG, output_pattern_img=False):
     #################
     # Testing 
     #################
+    with open(BF_GOAL) as f:
+        bf_goal = yaml.load(f)
+
+    WD = bf_goal[2] # work distence(m)
     WD = 0.400 # work distence(m)
 
     World = frame3D.Frame(np.matlib.identity(4))

@@ -44,7 +44,7 @@ def draw_img(img, frame_name, winWidth, winheight=None, keep_aspect=True, ROI_si
         winWidth = int(winWidth)
         winheight = int(winheight)
     else:
-        ratio = img.shape[0] / img.shape[1]
+        ratio = float(img.shape[0]) / float(img.shape[1])
         winWidth = int(winWidth)
         winheight = int(winWidth*ratio)
 
@@ -54,6 +54,7 @@ def draw_img(img, frame_name, winWidth, winheight=None, keep_aspect=True, ROI_si
     cv2.namedWindow(frame_name, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(frame_name, winWidth, winheight)
     cv2.imshow(frame_name, img)
+    cv2.waitKey(1000)
 
 def gaus(x, a, mean, sigma):
     return a*np.exp(-(x-mean)**2 / (2*sigma**2))
@@ -72,7 +73,7 @@ def find_peak(x, y):
     def gaus_minus(x, a, mean, sigma):
         return -gaus(x, a, mean, sigma)
     a, mean, sigma = popt
-    x_peak = fmin(gaus_minus, x0=10, args=(a, mean, sigma))[0]
+    x_peak = fmin(gaus_minus, x0=x[len(x)//2], args=(a, mean, sigma))[0]
     peak = (x_peak, gaus(x_peak, *popt))
     return (x, gaus(x, *popt), peak)
 
@@ -85,9 +86,10 @@ def main(DEBUG):
     BASE = path['AFocus'] if DEBUG else path['ROOT']
     IMAGE_PATH = BASE + 'img/af*.bmp'
     AF_GOAL = BASE + 'goal/af_goal.yaml'
+    BF_GOAL = BASE + 'goal/bf_goal.yaml'
 
     images = sorted(glob.glob(IMAGE_PATH))
-    ROI = (500, 500) # heigh, width
+    ROI = (35, 35) # heigh, width
     windowWidth = 800
     ls_contrast = []
     for fname in images:
@@ -98,13 +100,20 @@ def main(DEBUG):
         print(fname)
         print(contrast)
         draw_img(img, 'image', windowWidth, ROI_size=ROI)
-        cv2.waitKey(1000)
         
-    # fitting
-    n = len(images)
-    x = np.arange(n)
-    x, y_hat, peak = find_peak(x, ls_contrast)
+    # Guas curve fitting and find peak locaion
+
+    with open(AF_GOAL) as f:
+        af_goals = np.array(yaml.load(f))
+    wd = af_goals[:, 2]
+    x, y_hat, peak = find_peak(wd, ls_contrast)
     print(peak)
+
+    # Save best focal work distance to ros goal
+    bestFocus_goals = af_goals[0, :]
+    bestFocus_goals[2] = peak[0]
+    with open(BF_GOAL, 'w') as f:
+        yaml.dump(bestFocus_goals.tolist(), f, default_flow_style=False)
 
     # plot
     plt.plot(x, ls_contrast, 'b+:', label='data')

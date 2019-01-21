@@ -45,15 +45,13 @@ def AutoFocus(Robot, Camera, path, DEBUG):
     ### Step 2: Auto Focus
     ###############################
     BASE = path['AFocus'] if DEBUG else path['ROOT']
-    ACenter_GOAL = path['ACenter'] + 'goal/ac_goal.yaml'
+    AFocus_GOAL = BASE + 'goal/af_goal.yaml'
+    BFocus_GOAL = BASE + 'goal/bf_goal.yaml'
 
-    with open(ACenter_GOAL) as f:
-        center_goal = yaml.load(f)
+    with open(AFocus_GOAL) as f:
+        af_goals = yaml.load(f)
 
-    goal = np.array(center_goal)
-    for ind, dz in enumerate(np.linspace(-0.02, 0.02, 11)):
-        goal[2] = center_goal[2] + dz
-        print(goal)
+    for ind, goal in enumerate(af_goals):
         Robot.go_to_pose_goal(goal)
         time.sleep(1)
         img_name = BASE + 'img/af' + str(ind+1).zfill(2) + '.bmp'
@@ -61,14 +59,24 @@ def AutoFocus(Robot, Camera, path, DEBUG):
 
     cmd = 'python ' + path['AFocus'] + 'autoFocus.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
+    with open(BFocus_GOAL) as f:
+        goal = yaml.load(f)
+
+    # Move to best focus position
+    Robot.go_to_pose_goal(goal)
+    time.sleep(1)
+    image = Camera.trigger(BASE + 'img/bestFocused.bmp')
+    print("============ End Auto focus process ============")
 
 def AutoPose(Robot, Camera, path, DEBUG):
     ###############################
     ### Step 3: Auto Pose
     # ###############################
     BASE = path['APose'] if DEBUG else path['ROOT']
+    AF_BASE = path['AFocus'] if DEBUG else path['ROOT']
     POSE_GOAL = BASE + 'goal/ap_goal.yaml'
-
+    BFocus_GOAL = AF_BASE + 'goal/bf_goal.yaml'
+    
     cmd = 'python ' + path['APose'] + 'autoPose.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
     with open(POSE_GOAL) as f:
@@ -116,9 +124,9 @@ def main(DEBUG=True):
     Camera = hardward_controller.camera_shooter()
     try:
         # AutoCenter(Robot, Camera, path, DEBUG)
-        # AutoFocus(Robot, Camera, path, DEBUG)
+        # AutoFocus(Robot, Camera, path, DEBUG) 
         AutoPose(Robot, Camera, path, DEBUG)
-        CameraCalibration(Robot, Camera, path, DEBUG)
+        # CameraCalibration(Robot, Camera, path, DEBUG)
 
 
         print("============ Calibration process complete!")
@@ -129,6 +137,6 @@ def main(DEBUG=True):
         return
 
 if __name__ == '__main__':
-  main()
+    main()
   
 

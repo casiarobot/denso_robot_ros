@@ -126,16 +126,21 @@ def main(DEBUG):
         path = yaml.load(f)
 
     BASE = path['APose'] if DEBUG else path['ROOT']
-    CAMERA_POSE_PATH = BASE + '/goal/camera_pose.yaml'
+    AF_BASE = path['AFocus'] if DEBUG else path['ROOT']
+    BF_GOAL = AF_BASE + 'goal/bf_goal.yaml'
+    CAMERA_POSE_PATH = BASE + 'goal/camera_pose.yaml'
     ROS_GOAL_PATH = BASE + 'goal/ap_goal.yaml'
     Bs_PATH = BASE + 'goal/Bs.yaml'
     X_PATH = BASE + 'goal/X.yaml'
     Z_PATH = BASE + 'goal/Z.yaml'
     Z2_PATH = BASE + 'goal/Z2.yaml'
 
-    WD = 0.400 # work distence(m)
+    with open(BF_GOAL) as f:
+        bf_goal = yaml.load(f)
+
+    WD = bf_goal[2] # work distence(m)
     pose_amount = 12 # Amount of camera pose
-    phi = 25 # polarangle 
+    phi = 10 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
 
     camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
