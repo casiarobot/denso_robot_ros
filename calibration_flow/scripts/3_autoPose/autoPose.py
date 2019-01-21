@@ -118,18 +118,25 @@ def as_ROSgoal(Homo_mats):
                     q.x, q.y, q.z, q.w)
     return goals
 
-if __name__ =='__main__':
-    import os.path
+def main(DEBUG):
+    # import os.path
+    # PATH SETTING
+    CONFIG = 'config.yaml'
+    with open(CONFIG) as f:
+        path = yaml.load(f)
+
+    BASE = path['APose'] if DEBUG else path['ROOT']
+    CAMERA_POSE_PATH = BASE + '/goal/camera_pose.yaml'
+    ROS_GOAL_PATH = BASE + 'goal/ap_goal.yaml'
+    Bs_PATH = BASE + 'goal/Bs.yaml'
+    X_PATH = BASE + 'goal/X.yaml'
+    Z_PATH = BASE + 'goal/Z.yaml'
+    Z2_PATH = BASE + 'goal/Z2.yaml'
+
     WD = 0.400 # work distence(m)
     pose_amount = 12 # Amount of camera pose
     phi = 25 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
-    CAMERA_POSE_PATH = '3_autoPose/data/camera_pose.yaml'
-    ROS_GOAL_PATH = 'goal/ap_goal.yaml'
-    Bs_PATH = 'goal/Bs.yaml'
-    X_PATH = 'goal/X.yaml'
-    Z_PATH = 'goal/Z.yaml'
-    Z2_PATH = 'goal/Z2.yaml'
 
     camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
                                     theta_interval, CAMERA_POSE_PATH)                    
@@ -234,3 +241,10 @@ if __name__ =='__main__':
         print('Save the ROS goal to yaml data file.')
     plt.show()
 
+if __name__ =='__main__':
+    import sys
+    if len(sys.argv) >= 2:
+        DEBUG = sys.argv[1]
+    else:
+        DEBUG = True
+    main(DEBUG=DEBUG)

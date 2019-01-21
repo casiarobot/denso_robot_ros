@@ -29,7 +29,7 @@ Simulate a Denso robot in ROS environment
     sudo apt-get install -y python-pip
     sudo pip2 install --upgrade pip
     ```
-- Install ROS Kinetic  and MoveIt package, save the content to the file `install_bash.sh`, and run `bash install_bash.sh` in terminal.
+- Install ROS Kinetic  and MoveIt package, save the content to the file `install_ros.sh`, and run `bash install_ros.sh` in terminal.
 
     ```
     #!/bin/bash
@@ -48,12 +48,13 @@ Simulate a Denso robot in ROS environment
     sudo rosdep init
     rosdep update
 
-    sudo apt-get install ros-kinetic-moveit
-    sudo apt-get install ros-kinetic-denso-robot-ros
+    sudo apt-get install -y --allow-unauthenticated ros-kinetic-moveit
+    sudo apt-get install -y --allow-unauthenticated ros-kinetic-denso-robot-ros
 
     source /opt/ros/kinetic/setup.bash
 
-    mkdir -p /data/denso_ws/src/ros_home/img
+    sudo mkdir -p /data/denso_ws/src/ros_home/img
+    sudo chown -R $USER:$USER /data
     cd /data/denso_ws/
     catkin_make
     echo "source /data/denso_ws/devel/setup.bash" >> ~/.bashrc
@@ -64,6 +65,7 @@ Simulate a Denso robot in ROS environment
 
 
 ### Pull Denso model from github
+- Close termial and restart it
 - Now we need to remove the original denso model and pull the new one from github
     ```
     cd /opt/ros/kinetic/share    # Change to ROS directory
@@ -73,7 +75,8 @@ Simulate a Denso robot in ROS environment
     ```
 - Check is there a directory in the path `/data/denso_ws`. if not, run those command to build a catkin workspace
     ```
-    mkdir -p /data/denso_ws/src/ros_home/img
+    sudo mkdir -p /data/denso_ws/src/ros_home/img
+    sudo chown -R $USER:$USER /data
     cd /data/denso_ws/
     catkin_make
     echo "source /data/denso_ws/devel/setup.bash" >> ~/.bashrc
@@ -81,7 +84,8 @@ Simulate a Denso robot in ROS environment
     ```
 - Pull the Denso ROS model by running:
     ```
-    cd /data/denso_ws_src
+    cd /data/denso_ws/src
+    sudo apt-get install -y git
     git clone https://github.com/solab-ntu/denso_robot_ros.git
     ```
 - Test it
@@ -237,5 +241,4 @@ Basic operation
 3. Connect your linux computer and RC8 control with ethernet cable. Then, change local IP in same LAN Network with RC8, `192.168.0.2` for example. Control robot by MoveIt framework, simply run
     ```
     roslaunch denso_robot_bringup vs6242_bringup.launch sim:=false ip_address:=192.168.0.1
-
     ```

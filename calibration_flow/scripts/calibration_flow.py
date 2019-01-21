@@ -1,234 +1,132 @@
 #!/usr/bin/env python
 
-import sys
-import copy
-import rospy
 import numpy as np
-import quaternion
 from math import pi
-import moveit_commander
-from moveit_commander.conversions import pose_to_list
-import moveit_msgs.msg
-import geometry_msgs.msg
-from std_msgs.msg import String
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
-import cv2
+import rospy
 import yaml
 import time
+import hardward_controller
+import subprocess
 
-def all_close(goal, actual, tolerance):
-  """
-  Convenience method for testing if a list of values are within a tolerance of their counterparts in another list
-  @param: goal       A list of floats, a Pose or a PoseStamped
-  @param: actual     A list of floats, a Pose or a PoseStamped
-  @param: tolerance  A float
-  @returns: bool
-  """
-  all_equal = True
-  if type(goal) is list:
-    for index in range(len(goal)):
-      if abs(actual[index] - goal[index]) > tolerance:
-        return False
+current_goal = np.zeros((1,7))
 
-  elif type(goal) is geometry_msgs.msg.PoseStamped:
-    return all_close(goal.pose, actual.pose, tolerance)
+def AutoCenter(Robot, Camera, path, DEBUG):
+    ###############################
+    ### Auto Center
+    ###############################
+    BASE = path['ACenter'] if DEBUG else path['ROOT']
+    Init_GOAL = BASE + 'goal/init_goal.yaml'
+    ACenter_GOAL = BASE + 'goal/ac_goal.yaml'
 
-  elif type(goal) is geometry_msgs.msg.Pose:
-    return all_close(pose_to_list(goal), pose_to_list(actual), tolerance)
+    # Initial shot
+    goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0)
+    with open(Init_GOAL, 'w') as f:
+        yaml.dump(list(goal), f, default_flow_style=False)
 
-  return True
-
-class MoveGroupInteface(object):
-  """MoveGroupPythonIntefaceTutorial"""
-  def __init__(self):
-    super(MoveGroupInteface, self).__init__()
-
-    #################### 
-    ## First initialize node:
-    #################### 
-    moveit_commander.roscpp_initialize(sys.argv)
-    rospy.init_node('moveit_python_interface',
-                    anonymous=True)
-    robot = moveit_commander.RobotCommander()
-    scene = moveit_commander.PlanningSceneInterface()
-
-    group_name = "arm"
-    group = moveit_commander.MoveGroupCommander(group_name)
-
-    ####################
-    ## BEGIN_SUB_TUTORIAL basic_info
-    ######################
-    # We can get the name of the reference frame for this robot:
-    planning_frame = group.get_planning_frame()
-    print "============ Reference frame: %s" % planning_frame
-
-    # We can also print the name of the end-effector link for this group:
-    eef_link = group.get_end_effector_link()
-    print "============ End effector: %s" % eef_link
-
-    # We can get a list of all the groups in the robot:
-    group_names = robot.get_group_names()
-    print "============ Robot Groups:", robot.get_group_names()
-
-    # Sometimes for debugging it is useful to print the entire state of the
-    # robot:
-    print "============ Printing robot state"
-    print robot.get_current_state()
-    print ""
-
-    # Misc variables
-    self.robot = robot
-    self.scene = scene
-    self.group = group
-    self.group_names = group_names
-
-  def __set_pose_goal__(self, goal):
-    ######################
-    ## Cast goal to ros msg pose format
-    ######################
-    pose_goal = geometry_msgs.msg.Pose()
-    pose_goal.position.x = goal[0]
-    pose_goal.position.y = goal[1]
-    pose_goal.position.z = goal[2]
-    pose_goal.orientation.x = goal[3]
-    pose_goal.orientation.y = goal[4]
-    pose_goal.orientation.z = goal[5]
-    pose_goal.orientation.w = goal[6]
-    
-    return pose_goal
-
-  def go_to_joint_state(self):
-
-    ######################
-    ## Define joint goal 
-    ######################
-    joint_goal = self.group.get_current_joint_values()
-    joint_goal[0] = 0
-    joint_goal[1] =0
-    joint_goal[2] = 0
-    joint_goal[3] = 0
-    joint_goal[4] = 0
-    joint_goal[5] = pi/3
-
-    ######################
-    ## Execute joint goal
-    ## Calling ``stop()`` ensures that there is no residual movement 
-    ######################
-    self.group.go(joint_goal, wait=True)
-    self.group.stop()
-
-    ######################
-    ## For test:
-    ######################
-    current_joints = self.group.get_current_joint_values()
-    return all_close(joint_goal, current_joints, 0.01)
-
-  def go_to_pose_goal(self, goal):
-    '''
-    @param: goal       A list of floats, (x, y, z, qx, qy, qz, qw)
-    @returns: bool
-    '''
-    ######################
-    ## Planning to a Pose Goal
-    ######################
-    pose_goal = self.__set_pose_goal__(goal)
-    a = self.group.set_pose_target(pose_goal)
-    rospy.loginfo('Pose goal: {}'.format(a))
-
-    ######################
-    ## Execute Pose Goal
-    ## Calling `stop()` ensures that there is no residual movement
-    ######################
-    plan = self.group.go(wait=True)
-    self.group.stop()
-    self.group.clear_pose_targets()
-
-    ######################
-    ## For test:
-    ######################
-    current_pose = self.group.get_current_pose().pose
-    return all_close(pose_goal, current_pose, 0.01)
-
-class camera_shooter:
-    def __init__(self):
-        self.bridge = CvBridge()
-        self.image_topic = "/arm_sensor/camera/image_raw"
-
-    def trigger(self, imgName=None):
-      '''
-      The image will save to $ROS_HOME directory, or 
-      you can modify it by node "cwd" attribute
-      '''
-      data = rospy.wait_for_message(self.image_topic, Image)
-      try:
-          cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-      except CvBridgeError as e:
-          print(e)
-      else:
-          if imgName is not None:
-            print("Save an image!")
-            print("filename: {}".format(imgName))
-            cv2.imwrite(imgName, cv_image)
-          return cv_image
-
-    def image_stream(self):
-        self.image_sub = rospy.Subscriber(self.image_topic, Image, self.callback)
-
-    def callback(self, data):
-        print("Received an image!")
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        except CvBridgeError as e:
-            print(e)
-        else:
-            # Save your OpenCV2 image as a jpeg 
-            print("Save an image!")
-            cv2.imshow('img', cv_image)
-            cv2.waitKey()
-            cv2.imwrite('cimage.bmp', cv_image)
-  
-def main():
-  POSE_GOAL_PATH = 'goal/ap_goal.yaml'
-  CC_GOAL_PATH = 'goal/cc_goal.yaml'
-  try:
-    MoveGroup = MoveGroupInteface()
-    camera = camera_shooter()
-
-    image = camera.trigger('img/init.bmp')
-    print("============ Press `Enter` to execute a movement using a pose goal ...")
-    # raw_input()
-    goal = (0.3, -0.03, 0.5, 0, -1, 0, 0)
-    # goal = (0.5, 0, 1.0875, 0, -1, 0, 0)
-    MoveGroup.go_to_pose_goal(goal)
-
-    print("============ Press `Enter` to execute camera trigger to save image ...")
+    Robot.go_to_pose_goal(goal)
     time.sleep(1)
-    image = camera.trigger('img/center.bmp')
+    image = Camera.trigger(BASE + 'img/init.bmp')
 
-    with open(POSE_GOAL_PATH) as f:
-      pose_goals = yaml.load(f)
-      print('Get pose goal from yaml file.')
-    for i, goal in enumerate(pose_goals):
-      MoveGroup.go_to_pose_goal(goal)
-      print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
-      time.sleep(1)
-      image = camera.trigger('img/ap{}.bmp'.format(str(i+1).zfill(2)))
+    # Compute companation
+    cmd = 'python ' + path['ACenter'] + 'autoCenter.py ' + str(DEBUG)
+    subprocess.call(cmd, shell=True)
+    with open(ACenter_GOAL) as f:
+        goal = yaml.load(f)
+        print('Get pose goal from yaml file.')
 
-    with open(CC_GOAL_PATH) as f:
-      pose_goals = yaml.load(f)
-      print('Get pose goal from yaml file.')
-    for i, goal in enumerate(pose_goals):
-      MoveGroup.go_to_pose_goal(goal)
-      print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(i))
-      time.sleep(1)
-      image = camera.trigger('img/cc{}.bmp'.format(str(i+1).zfill(2)))
+    # Move to center position
+    Robot.go_to_pose_goal(goal)
+    time.sleep(1)
+    image = Camera.trigger(BASE + 'img/center.bmp')
+    print("============ End Auto center process ============")
 
-    print("============ Calibration process complete!")
-  except rospy.ROSInterruptException:
-    return
-  except KeyboardInterrupt:
-    return
+def AutoFocus(Robot, Camera, path, DEBUG):
+    ###############################
+    ### Step 2: Auto Focus
+    ###############################
+    BASE = path['AFocus'] if DEBUG else path['ROOT']
+    ACenter_GOAL = path['ACenter'] + 'goal/ac_goal.yaml'
+
+    with open(ACenter_GOAL) as f:
+        center_goal = yaml.load(f)
+
+    goal = np.array(center_goal)
+    for ind, dz in enumerate(np.linspace(-0.02, 0.02, 11)):
+        goal[2] = center_goal[2] + dz
+        print(goal)
+        Robot.go_to_pose_goal(goal)
+        time.sleep(1)
+        img_name = BASE + 'img/af' + str(ind+1).zfill(2) + '.bmp'
+        image = Camera.trigger(img_name)
+
+    cmd = 'python ' + path['AFocus'] + 'autoFocus.py ' + str(DEBUG)
+    subprocess.call(cmd, shell=True)
+
+def AutoPose(Robot, Camera, path, DEBUG):
+    ###############################
+    ### Step 3: Auto Pose
+    # ###############################
+    BASE = path['APose'] if DEBUG else path['ROOT']
+    POSE_GOAL = BASE + 'goal/ap_goal.yaml'
+
+    cmd = 'python ' + path['APose'] + 'autoPose.py ' + str(DEBUG)
+    subprocess.call(cmd, shell=True)
+    with open(POSE_GOAL) as f:
+        pose_goals = yaml.load(f)
+        print('Get pose goal from yaml file.')
+
+    for ind, goal in enumerate(pose_goals):
+        Robot.go_to_pose_goal(goal)
+        print("============ save as ap{}.bmp".format(ind))
+        time.sleep(1)
+        img_name = BASE + 'img/ap' + str(ind+1).zfill(2) + '.bmp'
+        image = Camera.trigger(img_name)
+
+def CameraCalibration(Robot, Camera, path, DEBUG):
+    ###############################
+    ### Step 4: Camera Calibration
+    ###############################
+    BASE = path['CCalibration'] if DEBUG else path['ROOT']
+    CC_GOAL = BASE + 'goal/cc_goal.yaml'
+    
+    cmd = 'python ' + path['CCalibration'] + 'cameraCalibration.py ' + str(DEBUG)
+    subprocess.call(cmd, shell=True)
+
+    with open(CC_GOAL) as f:
+        pose_goals = yaml.load(f)
+        print('Get pose goal from yaml file.')
+    for ind, goal in enumerate(pose_goals):
+        Robot.go_to_pose_goal(goal)
+        print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(ind))
+        time.sleep(1)
+        img_name = BASE + 'img/cc' + str(ind+1).zfill(2) + '.bmp'
+        image = Camera.trigger(img_name)
+    
+
+def main(DEBUG=True):
+    # PATH SETTING
+    CONFIG = 'config.yaml'
+    with open(CONFIG) as f:
+        path = yaml.load(f)
+
+    APose_GOAL = path['ROOT'] + 'goal/ap_goal.yaml'
+    CCalibration_GOAL = path['ROOT'] + 'goal/cc_goal.yaml'
+
+    Robot = hardward_controller.MoveGroupInteface()
+    Camera = hardward_controller.camera_shooter()
+    try:
+        # AutoCenter(Robot, Camera, path, DEBUG)
+        # AutoFocus(Robot, Camera, path, DEBUG)
+        AutoPose(Robot, Camera, path, DEBUG)
+        CameraCalibration(Robot, Camera, path, DEBUG)
+
+
+        print("============ Calibration process complete!")
+    
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
 
 if __name__ == '__main__':
   main()

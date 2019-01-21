@@ -1,0 +1,7 @@
+ROOT: '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/'
+ACenter:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/1_autoCenter/'
+AFocus:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/2_autoFocus/'
+APose:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/3_autoPose/'
+CCalibration:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/4_cameraCalibration/'
+solveXZ: '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/5_solveXZ'
+
