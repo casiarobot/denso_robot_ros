@@ -56,4 +56,6 @@
   
   <include file="$(find denso_robot_moveit_config)/launch/default_warehouse_db.launch" />
 
+  <node name="joint_state_relay" pkg="topic_tools" type="relay"  args="/$(arg robot_name)/joint_states /joint_states" />
+
 </launch>

@@ -191,6 +191,6 @@ class camera_shooter:
   
 if __name__ == '__main__':
     robot = MoveGroupInteface()
-    robot.get_current_pose()
+    robot.go_to_joint_state([1,2,3,4,5,6])
     # camera = camera_shooter() 
     # camera.trigger('img/hi.png')
