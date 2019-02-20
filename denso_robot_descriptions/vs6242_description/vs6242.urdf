@@ -397,6 +397,17 @@
 				<mesh filename="package://denso_robot_descriptions/vs6242_description/pcb.dae" scale="0.4 0.4 0.4" />
 			</geometry>
 		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<box size="0.03 0.03 0.002"/> 
+			</geometry>
+		</collision>
+		<inertial>
+			<mass value="1" />
+			<origin rpy="0.000000 0.000000 0.000000" xyz="0.000000 0.000000 0.000000" />
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+		</inertial>
 	</link>
 
 	<link name="marker">
@@ -425,10 +436,16 @@
 		<origin rpy="0.000000 0.000000 1.5707963" xyz="0.000000 -0.350000 0.001" />
 	</joint>
 
-	<joint name="joint_marker" type="fixed">
+	<!-- <joint name="joint_marker" type="fixed">
 		<parent link="pcb" />
 		<child link="marker" />
 		<origin rpy="0.000000 0.000000 1.5707963" xyz="0.05000 0.060000 0.01" />
+	</joint> -->
+
+	<joint name="joint_marker" type="fixed">
+		<parent link="world" />
+		<child link="marker" />
+		<origin rpy="0.000000 0.000000 1.5707963" xyz="-0.06000 -0.30000 0.011" />
 	</joint>
 
 	<!-- Add emissive light in pattern self -->

@@ -28,10 +28,10 @@ def as_homogeneous_mat(rvecs, tvecs):
         extr_mat[i, 0:3 ,3] = tvec.flatten()
         extr_mat[i, 3, 3] = 1.0
     
-    # Extrinsic parameter from Pattern to Camera 
     As = np.zeros((pose_amount, 4, 4))
     for i, A in enumerate(extr_mat):
-        As[i] = np.linalg.inv(A)
+        As[i] = np.linalg.inv(A) # (Pattern to Camera)
+        # As[i] = A # (Camera to Pattern)
     return As
 
 def as_ROSgoal(Homo_mats):
@@ -97,7 +97,7 @@ def main(DEBUG, output_pattern_img=True):
     imsize = gray.shape
     retval, cameraMatrix, distCoeffs, rvecs, tvecs = cv2.aruco.calibrateCameraCharuco(allCHCors, allCHIds, board, imsize, None, None)
     print(retval)
-    # ext_mat: Extrinsic matrix from Camera to Pattern
+    # ext_mat: Extrinsic matrix from Pattern to Camera
     ext_mat = as_homogeneous_mat(rvecs, tvecs)
 
     with open(EXTMAT, 'w') as f:
@@ -156,7 +156,7 @@ def main(DEBUG, output_pattern_img=True):
         Bs[i] = Z*A*X
         # {Flange}
         Flange.transform_by_rotation_mat(Bs[i], refFrame=Base.pose)
-        # Flange.plot_frame(ax, '')
+        Flange.plot_frame(ax, '')
         # {Camera}
         Camera.transform_by_rotation_mat(A, refFrame=Image.pose)
         Camera.plot_frame(ax, '') 

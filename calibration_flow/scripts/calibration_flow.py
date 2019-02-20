@@ -110,6 +110,31 @@ def CameraCalibration(Robot, Camera, path, DEBUG):
         img_name = BASE + 'img/cc' + str(ind+1).zfill(2) + '.bmp'
         image = Camera.trigger(img_name)
 
+def SolveXZ(Robot, Camera, path, DEBUG):
+    ###############################
+    ### Step 5: Solve XZ
+    ###############################    
+    cmd = 'python ' + path['solveXZ'] + 'solveXZ.py ' + str(DEBUG)
+    subprocess.call(cmd, shell=True)
+
+def HoleSearching(Robot, Camera, path, DEBUG):
+    ###############################
+    ### Step 6: Hole searching
+    ###############################
+    BASE = path['holeSearching'] if DEBUG else path['ROOT']
+    Init_Hole_GOAL = BASE + 'goal/init_hole.yaml'
+    
+    with open(Init_Hole_GOAL) as f:
+        pose_goal = yaml.load(f)
+        print('Get pose goal from yaml file.')
+    Robot.go_to_pose_goal(pose_goal)
+    print("============ Press `Enter` to execute camera trigger save as hs.bmp")
+    time.sleep(1)
+    img_name = BASE + 'img/hs.bmp'
+    image = Camera.trigger(img_name)
+
+    cmd = 'python ' + path['holeSearching'] + 'holeSearching.py ' + str(DEBUG)
+    subprocess.call(cmd, shell=True)
 
 def main(DEBUG=True):
     # PATH SETTING
@@ -123,11 +148,12 @@ def main(DEBUG=True):
     Robot = hardward_controller.MoveGroupInteface()
     Camera = hardward_controller.camera_shooter()
     try:
-        # AutoCenter(Robot, Camera, path, DEBUG)
+        AutoCenter(Robot, Camera, path, DEBUG)
         # AutoFocus(Robot, Camera, path, DEBUG) 
-        # AutoPose(Robot, Camera, path, DEBUG)
+        AutoPose(Robot, Camera, path, DEBUG)
         CameraCalibration(Robot, Camera, path, DEBUG)
-
+        SolveXZ(Robot, Camera, path, DEBUG)
+        HoleSearching(Robot, Camera, path, DEBUG)
 
         print("============ Calibration process complete!")
     

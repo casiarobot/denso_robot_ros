@@ -58,6 +58,7 @@ def __solveXZ__(As, Bs):
         fval = np.zeros((len(HBs), 12))
         for i, (HAi, HBi) in enumerate(zip(HAs, HBs)):
             error = HBi - HZ*HAi*HX
+            
             fval[i, :] = np.array(error[0:3, :]).flatten()
         
         return fval.flatten()
@@ -84,6 +85,7 @@ def test_solution(As, Bs, X, Z):
     residual = np.zeros(len(As))
     for i, (A, B) in enumerate(zip(As, Bs)):
         residual[i] = np.linalg.norm(B - Z*A*X)
+        
 
     return residual
 
@@ -108,12 +110,6 @@ def main(DEBUG):
     As, Bs, X, Z, Z2 = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH)
     HX, HZ = __solveXZ__(As, Bs)
 
-    with open(HX_PATH, 'w') as f:
-        yaml.dump(HX.tolist(), f, default_flow_style=False)
-        print('Save the solved X matrix to yaml data file.')
-    with open(HZ_PATH, 'w') as f:
-        yaml.dump(HZ.tolist(), f, default_flow_style=False)
-        print('Save the solved Z matrix to yaml data file.')
 
     # print(HX)
     # print(HZ)
@@ -121,6 +117,14 @@ def main(DEBUG):
     r2 = test_solution(As, Bs, X, Z2)
     print(r)
     print(r2)
+
+    with open(HX_PATH, 'w') as f:
+        HX = np.linalg.inv(HX) # from flange to camera
+        yaml.dump(HX.tolist(), f, default_flow_style=False)
+        print('Save the solved X matrix to yaml data file.')
+    with open(HZ_PATH, 'w') as f:
+        yaml.dump(HZ.tolist(), f, default_flow_style=False)
+        print('Save the solved Z matrix to yaml data file.')
 
 if __name__ == "__main__":
     import sys

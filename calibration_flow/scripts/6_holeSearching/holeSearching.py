@@ -23,14 +23,11 @@ import matplotlib.pyplot as plt
 # PATH SETTING
 
 def as_homogeneous_mat(rvec, tvec):
-    # Extrinsic parameter from Object to Camera
-    D_inv = np.identity(4)
-    D_inv[0:3, 0:3] = cv2.Rodrigues(rvec)[0]
-    D_inv[0:3 ,3] = tvec.flatten()
-
     # Extrinsic parameter from Camera to Object
-    D = np.linalg.inv(D_inv)
-    return np.matrix(D)
+    mat = np.identity(4)
+    mat[0:3, 0:3] = cv2.Rodrigues(rvec)[0]
+    mat[0:3 ,3] = tvec.flatten()
+    return mat
 
 def main(DEBUG):
     CONFIG = 'config.yaml'
@@ -42,10 +39,11 @@ def main(DEBUG):
     XZ_BASE = path['solveXZ'] if DEBUG else path['ROOT']
 
     Init_Hole_GOAL = BASE + 'goal/init_hole.yaml'
-    IMAGE_PATH = BASE + 'img/hs.png'
+    IMAGE_PATH = BASE + 'img/hs.bmp'
     CAMERA_MAT = CC_BASE + 'goal/camera_mat.yaml'
     HX_PATH = XZ_BASE + 'goal/HX.yaml'
     D_MAT = BASE + 'goal/D.yaml'
+    W_MAT = BASE + 'goal/W.yaml'
 
     aruco_dict = cv2.aruco.getPredefinedDictionary( cv2.aruco.DICT_6X6_250 )
     squareLength = 0.01   # Here, our measurement unit is m.
@@ -67,17 +65,17 @@ def main(DEBUG):
             if len(diamondCorners) >= 1: 
                 img_with_diamond = cv2.aruco.drawDetectedDiamonds(frame, diamondCorners, diamondIds, (0,255,0))
                 rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(diamondCorners, squareLength, cameraMatrix, distCoeffs)
-                img_with_diamond = cv2.aruco.drawAxis(img_with_diamond, cameraMatrix, distCoeffs, rvec, tvec, 100)    # axis length 100 can be changed according to your requirement
+                img_with_diamond = cv2.aruco.drawAxis(img_with_diamond, cameraMatrix, distCoeffs, rvec, tvec, 1)    # axis length 100 can be changed according to your requirement
         else:
             img_with_diamond = gray
 
         cv2.namedWindow('diamond', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('diamond', 1200, 800)
         cv2.imshow("diamond", img_with_diamond)   # display
-        cv2.waitKey(1)
+        cv2.waitKey(100)
     cv2.destroyAllWindows()
 
-    D = as_homogeneous_mat(rvec, tvec)
+    D = as_homogeneous_mat(rvec, tvec) # from Camera to Object
     with open(D_MAT, 'w') as f:
             yaml.dump(D.tolist(), f, default_flow_style=False)
             print('Save the D matrix to yaml data file.')
@@ -96,12 +94,16 @@ def main(DEBUG):
         B0[0:3, 0:3] = quaternion.as_rotation_matrix(q)
         B0[0:3, 3] = ih[0:3].reshape(3, 1)
 
+    W = B0*X*D
+    with open(W_MAT, 'w') as f:
+        yaml.dump(W.tolist(), f, default_flow_style=False)
+        print('Save the W matrix to yaml data file.')
+
     World = frame3D.Frame(np.matlib.identity(4))
     Base = frame3D.Frame(World.pose)
     Flange = frame3D.Frame(Base.pose)
     Camera = frame3D.Frame(Base.pose)
     Workpiece = frame3D.Frame(Base.pose)
-    Hole = frame3D.Frame(Base.pose)
     orientation = frame3D.Orientation()
     ax = frame3D.make_3D_fig(axSize=0.45 )
     
@@ -110,8 +112,13 @@ def main(DEBUG):
     Flange.transform_by_rotation_mat(B0, refFrame=Base.pose)
     Camera.transform_by_rotation_mat(X, refFrame=Flange.pose)
     Workpiece.transform_by_rotation_mat(D, refFrame=Camera.pose)
+    
+    cmd_W = orientation.asRad((-0.06, -0.3, 0.011, 180, 180, 0)).cmd()
+    W2 = Workpiece.transform(cmd_W, refFrame=World.pose)
+    r = W-W2
+    print('Postion error: {} mm'.format(np.linalg.norm(r[0:2, 3])*1000.0))
 
-    Base.plot_frame(ax, 'Base') 
+    Base.plot_frame(ax, 'Base')
     Camera.plot_frame(ax, 'Camera') 
     Flange.plot_frame(ax, 'Flange') 
     Workpiece.plot_frame(ax, 'Workpiece')
