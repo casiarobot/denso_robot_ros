@@ -62,8 +62,6 @@ def __solveXZ__(As, Bs):
         
         return fval.flatten()
 
-
-    # Z = Bi*X*Ai
     x0 = np.random.rand(12)
     lb = (-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -10, -10, -5, -10, -10, -5)
     ub = (2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 10, 10, 10, 10, 10, 10)
@@ -95,7 +93,7 @@ def main(DEBUG):
     with open(CONFIG) as f:
         path = yaml.load(f)
     
-    BASE = path['CCalibration'] if DEBUG else path['ROOT']
+    BASE = path['solveXZ'] if DEBUG else path['ROOT']
     AP_BASE = path['APose'] if DEBUG else path['ROOT']
     CC_BASE = path['CCalibration'] if DEBUG else path['ROOT']
 
@@ -104,9 +102,19 @@ def main(DEBUG):
     X_PATH = AP_BASE + 'goal/X.yaml'
     Z_PATH = AP_BASE + 'goal/Z.yaml'
     Z2_PATH = AP_BASE + 'goal/Z2.yaml'
+    HX_PATH = BASE + 'goal/HX.yaml'
+    HZ_PATH = BASE + 'goal/HZ.yaml'
 
     As, Bs, X, Z, Z2 = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH)
     HX, HZ = __solveXZ__(As, Bs)
+
+    with open(HX_PATH, 'w') as f:
+        yaml.dump(HX.tolist(), f, default_flow_style=False)
+        print('Save the solved X matrix to yaml data file.')
+    with open(HZ_PATH, 'w') as f:
+        yaml.dump(HZ.tolist(), f, default_flow_style=False)
+        print('Save the solved Z matrix to yaml data file.')
+
     # print(HX)
     # print(HZ)
     r = test_solution(As, Bs, X, HZ)

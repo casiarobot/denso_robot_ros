@@ -138,9 +138,10 @@ def main(DEBUG):
     with open(BF_GOAL) as f:
         bf_goal = yaml.load(f)
 
-    WD = bf_goal[2] # work distence(m)
+    # WD = bf_goal[2] # work distence(m)
+    WD = 0.37
     pose_amount = 12 # Amount of camera pose
-    phi = 10 # polarangle 
+    phi = 9 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
 
     camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 

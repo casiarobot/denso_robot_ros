@@ -85,7 +85,7 @@ def AutoPose(Robot, Camera, path, DEBUG):
 
     for ind, goal in enumerate(pose_goals):
         Robot.go_to_pose_goal(goal)
-        print("============ save as ap{}.bmp".format(ind))
+        print("============ save as ap{}.bmp".format(ind+1))
         time.sleep(1)
         img_name = BASE + 'img/ap' + str(ind+1).zfill(2) + '.bmp'
         image = Camera.trigger(img_name)
@@ -109,7 +109,7 @@ def CameraCalibration(Robot, Camera, path, DEBUG):
         time.sleep(1)
         img_name = BASE + 'img/cc' + str(ind+1).zfill(2) + '.bmp'
         image = Camera.trigger(img_name)
-    
+
 
 def main(DEBUG=True):
     # PATH SETTING
@@ -123,10 +123,10 @@ def main(DEBUG=True):
     Robot = hardward_controller.MoveGroupInteface()
     Camera = hardward_controller.camera_shooter()
     try:
-        AutoCenter(Robot, Camera, path, DEBUG)
+        # AutoCenter(Robot, Camera, path, DEBUG)
         # AutoFocus(Robot, Camera, path, DEBUG) 
         # AutoPose(Robot, Camera, path, DEBUG)
-        # CameraCalibration(Robot, Camera, path, DEBUG)
+        CameraCalibration(Robot, Camera, path, DEBUG)
 
 
         print("============ Calibration process complete!")

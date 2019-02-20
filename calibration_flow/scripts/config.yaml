@@ -3,5 +3,5 @@ ACenter:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/1_autoCen
 AFocus:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/2_autoFocus/'
 APose:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/3_autoPose/'
 CCalibration:  '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/4_cameraCalibration/'
-solveXZ: '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/5_solveXZ'
-
+solveXZ: '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/5_solveXZ/'
+holeSearching: '/data/denso_ws/src/denso_robot_ros/calibration_flow/scripts/6_holeSearching/'

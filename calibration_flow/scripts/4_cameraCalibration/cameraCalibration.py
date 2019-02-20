@@ -28,7 +28,7 @@ def as_homogeneous_mat(rvecs, tvecs):
         extr_mat[i, 0:3 ,3] = tvec.flatten()
         extr_mat[i, 3, 3] = 1.0
     
-    # Extrinsic parameter from Pattern to Camera
+    # Extrinsic parameter from Pattern to Camera 
     As = np.zeros((pose_amount, 4, 4))
     for i, A in enumerate(extr_mat):
         As[i] = np.linalg.inv(A)
@@ -48,7 +48,7 @@ def as_ROSgoal(Homo_mats):
                     q.x, q.y, q.z, q.w)
     return goals
 
-def main(DEBUG, output_pattern_img=False):
+def main(DEBUG, output_pattern_img=True):
     # PATH SETTING
     CONFIG = 'config.yaml'
     with open(CONFIG) as f:
@@ -61,6 +61,7 @@ def main(DEBUG, output_pattern_img=False):
     IMAGE_PATH = AP_BASE + 'img/ap*.bmp'
     CC_GOAL = BASE + 'goal/cc_goal.yaml'
     EXTMAT = BASE + 'goal/As.yaml'
+    INTMAT = BASE + 'goal/camera_mat.yaml'
 
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
     board = cv2.aruco.CharucoBoard_create(11, 9, 0.020, 0.010, dictionary)
@@ -103,6 +104,10 @@ def main(DEBUG, output_pattern_img=False):
         yaml.dump(ext_mat.tolist(), f, default_flow_style=False)
         print('Save the Extrinsic matrix to yaml data file.')
 
+    with open(INTMAT, 'w') as f:
+        yaml.dump(cameraMatrix.tolist(), f, default_flow_style=False)
+        print('Save the Intrinsic matrix to yaml data file.')
+
     #################
     # Testing 
     #################
@@ -110,7 +115,7 @@ def main(DEBUG, output_pattern_img=False):
         bf_goal = yaml.load(f)
 
     WD = bf_goal[2] # work distence(m)
-    WD = 0.400 # work distence(m)
+    WD = 0.37 # work distence(m)
 
     World = frame3D.Frame(np.matlib.identity(4))
     Base = frame3D.Frame(World.pose)

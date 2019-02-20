@@ -75,6 +75,7 @@ class MoveGroupInteface(object):
     # robot:
     print "============ Printing robot state"
     print robot.get_current_state()
+    print group.get_current_pose().pose
     print ""
 
     # Misc variables
