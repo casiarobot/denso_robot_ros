@@ -9,18 +9,6 @@ import glob
 import yaml
 import frame3D
 import matplotlib.pyplot as plt
-# calibrationFile = "calibrationFileName.xml"
-# calibrationParams = cv2.FileStorage(calibrationFile, cv2.FILE_STORAGE_READ)
-# camera_matrix = calibrationParams.getNode("cameraMatrix").mat()
-# dist_coeffs = calibrationParams.getNode("distCoeffs").mat()
-
-# r = calibrationParams.getNode("R").mat()
-# new_camera_matrix = calibrationParams.getNode("newCameraMatrix").mat()
-
-# image_size = (1920, 1080)
-# map1, map2 = cv2.fisheye.initUndistortRectifyMap(camera_matrix, dist_coeffs, r, new_camera_matrix, image_size, cv2.CV_16SC2)
-
-# PATH SETTING
 
 def as_homogeneous_mat(rvec, tvec):
     # Extrinsic parameter from Camera to Object
@@ -28,6 +16,25 @@ def as_homogeneous_mat(rvec, tvec):
     mat[0:3, 0:3] = cv2.Rodrigues(rvec)[0]
     mat[0:3 ,3] = tvec.flatten()
     return mat
+
+def __cal_axis_angle_from_q__(q):
+    theta = 2*np.arccos(q.w)
+    v = np.array([q.x, q.y, q.z])/np.sin(theta/2)
+
+    return theta, v
+
+def calPositionAndOrientationError(H, H_exact):
+    H1 = np.array(H)
+    H2 = np.array(H_exact)
+    pError = np.linalg.norm(H1[0:2, 3] - H2[0:2, 3])
+    q1 = quaternion.from_rotation_matrix(H1[0:3, 0:3])
+    q2 = quaternion.from_rotation_matrix(H2[0:3, 0:3])
+    q = q1.inverse()*q2
+    theta, v = __cal_axis_angle_from_q__(q)
+    oError = np.degrees(theta) 
+    if oError > 180.0:
+        oError = 360.0 - oError 
+    return pError, oError
 
 def main(DEBUG):
     CONFIG = 'config.yaml'
@@ -43,7 +50,8 @@ def main(DEBUG):
     CAMERA_MAT = CC_BASE + 'goal/camera_mat.yaml'
     HX_PATH = XZ_BASE + 'goal/HX.yaml'
     D_MAT = BASE + 'goal/D.yaml'
-    W_MAT = BASE + 'goal/W.yaml'
+    HW_MAT = BASE + 'goal/HW.yaml'
+    EW_MAT = BASE + 'goal/EW.yaml'
 
     aruco_dict = cv2.aruco.getPredefinedDictionary( cv2.aruco.DICT_6X6_250 )
     squareLength = 0.01   # Here, our measurement unit is m.
@@ -95,9 +103,9 @@ def main(DEBUG):
         B0[0:3, 3] = ih[0:3].reshape(3, 1)
 
     W = B0*X*D
-    with open(W_MAT, 'w') as f:
+    with open(HW_MAT, 'w') as f:
         yaml.dump(W.tolist(), f, default_flow_style=False)
-        print('Save the W matrix to yaml data file.')
+        print('Save the solved W matrix to yaml data file.')
 
     World = frame3D.Frame(np.matlib.identity(4))
     Base = frame3D.Frame(World.pose)
@@ -115,14 +123,18 @@ def main(DEBUG):
     
     cmd_W = orientation.asRad((-0.06, -0.3, 0.011, 180, 180, 0)).cmd()
     W2 = Workpiece.transform(cmd_W, refFrame=World.pose)
-    r = W-W2
-    print('Postion error: {} mm'.format(np.linalg.norm(r[0:2, 3])*1000.0))
+    with open(EW_MAT, 'w') as f:
+        yaml.dump(W2.tolist(), f, default_flow_style=False)
+        print('Save the exact W matrix to yaml data file.')
+
+    pError, oError = calPositionAndOrientationError(W, W2)
+    print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
 
     Base.plot_frame(ax, 'Base')
     Camera.plot_frame(ax, 'Camera') 
     Flange.plot_frame(ax, 'Flange') 
     Workpiece.plot_frame(ax, 'Workpiece')
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":

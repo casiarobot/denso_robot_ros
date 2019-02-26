@@ -245,7 +245,7 @@ def main(DEBUG):
     with open(ROS_GOAL_PATH, 'w') as f:
         yaml.dump(goals.tolist(), f, default_flow_style=False)
         print('Save the ROS goal to yaml data file.')
-    plt.show()
+    # plt.show()
 
 if __name__ =='__main__':
     import sys

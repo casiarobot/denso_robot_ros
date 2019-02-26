@@ -166,7 +166,7 @@ def main(DEBUG, output_pattern_img=True):
         yaml.dump(goals.tolist(), f, default_flow_style=False)
         print('Save the ROS goal to yaml data file.')
 
-    plt.show()
+    # plt.show()
 if __name__ == "__main__":
     import sys
     if len(sys.argv) >= 2:

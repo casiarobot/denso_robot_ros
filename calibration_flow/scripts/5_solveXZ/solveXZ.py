@@ -89,6 +89,28 @@ def test_solution(As, Bs, X, Z):
 
     return residual
 
+def __cal_axis_angle_from_q__(q):
+    theta = 2*np.arccos(q.w)
+    v = np.array([q.x, q.y, q.z])/sin(theta/2)
+
+    return theta, v
+
+def calPositionAndOrientationError(H, H_exact):
+    H1 = np.array(H)
+    H2 = np.array(H_exact)
+    pH = np.sort(np.abs(H1[0:3, 3] - H2[0:3, 3]))
+
+    pError = np.linalg.norm(pH[0:2])
+    q1 = quaternion.from_rotation_matrix(H1[0:3, 0:3])
+    q2 = quaternion.from_rotation_matrix(H2[0:3, 0:3])
+    q = q1.inverse()*q2
+    theta, v = __cal_axis_angle_from_q__(q)
+    oError = np.degrees(theta) 
+    if oError > 180.0:
+        oError = 360.0 - oError 
+    return pError, oError
+
+    
 def main(DEBUG):
     # PATH SETTING
     CONFIG = 'config.yaml'
@@ -104,6 +126,7 @@ def main(DEBUG):
     X_PATH = AP_BASE + 'goal/X.yaml'
     Z_PATH = AP_BASE + 'goal/Z.yaml'
     Z2_PATH = AP_BASE + 'goal/Z2.yaml'
+    EX_PATH = BASE + 'goal/EX.yaml'
     HX_PATH = BASE + 'goal/HX.yaml'
     HZ_PATH = BASE + 'goal/HZ.yaml'
 
@@ -115,8 +138,9 @@ def main(DEBUG):
     # print(HZ)
     r = test_solution(As, Bs, X, HZ)
     r2 = test_solution(As, Bs, X, Z2)
-    print(r)
-    print(r2)
+
+    pError, oError = calPositionAndOrientationError(X, HX)
+    print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
 
     with open(HX_PATH, 'w') as f:
         HX = np.linalg.inv(HX) # from flange to camera
@@ -125,6 +149,11 @@ def main(DEBUG):
     with open(HZ_PATH, 'w') as f:
         yaml.dump(HZ.tolist(), f, default_flow_style=False)
         print('Save the solved Z matrix to yaml data file.')
+
+    with open(EX_PATH, 'w') as f:
+        X = np.linalg.inv(X) # from flange to camera
+        yaml.dump(X.tolist(), f, default_flow_style=False)
+        print('Save the exact X matrix to yaml data file.')
 
 if __name__ == "__main__":
     import sys

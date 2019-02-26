@@ -100,18 +100,18 @@ def CameraCalibration(Robot, Camera, path, DEBUG):
     cmd = 'python ' + path['CCalibration'] + 'cameraCalibration.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
 
-    with open(CC_GOAL) as f:
-        pose_goals = yaml.load(f)
-        print('Get pose goal from yaml file.')
-    for ind, goal in enumerate(pose_goals):
-        Robot.go_to_pose_goal(goal)
-        print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(ind))
-        time.sleep(1)
-        img_name = BASE + 'img/cc' + str(ind+1).zfill(2) + '.bmp'
-        image = Camera.trigger(img_name)
+    # with open(CC_GOAL) as f:
+    #     pose_goals = yaml.load(f)
+    #     print('Get pose goal from yaml file.')
+    # for ind, goal in enumerate(pose_goals):
+    #     Robot.go_to_pose_goal(goal)
+    #     print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(ind))
+    #     time.sleep(1)
+    #     img_name = BASE + 'img/cc' + str(ind+1).zfill(2) + '.bmp'
+    #     image = Camera.trigger(img_name)
 
 def SolveXZ(Robot, Camera, path, DEBUG):
-    ###############################
+    ###############################``
     ### Step 5: Solve XZ
     ###############################    
     cmd = 'python ' + path['solveXZ'] + 'solveXZ.py ' + str(DEBUG)
