@@ -19,7 +19,10 @@ def AutoCenter(Robot, Camera, path, DEBUG):
     ACenter_GOAL = BASE + 'goal/ac_goal.yaml'
 
     # Initial shot
-    goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0)
+    # goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
+    goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
+
+
     with open(Init_GOAL, 'w') as f:
         yaml.dump(list(goal), f, default_flow_style=False)
 
@@ -148,12 +151,12 @@ def main(DEBUG=True):
     Robot = hardward_controller.MoveGroupInteface()
     Camera = hardward_controller.camera_shooter()
     try:
-        AutoCenter(Robot, Camera, path, DEBUG)
+        # AutoCenter(Robot, Camera, path, DEBUG)
         # AutoFocus(Robot, Camera, path, DEBUG) 
         AutoPose(Robot, Camera, path, DEBUG)
-        CameraCalibration(Robot, Camera, path, DEBUG)
-        SolveXZ(Robot, Camera, path, DEBUG)
-        HoleSearching(Robot, Camera, path, DEBUG)
+        # CameraCalibration(Robot, Camera, path, DEBUG)
+        # SolveXZ(Robot, Camera, path, DEBUG)
+        # HoleSearching(Robot, Camera, path, DEBUG)
 
         print("============ Calibration process complete!")
     

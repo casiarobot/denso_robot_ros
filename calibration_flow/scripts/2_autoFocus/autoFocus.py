@@ -68,7 +68,8 @@ def gaus_fitting(x, y):
     popt, pcov = curve_fit(gaus, x, y, p0=[a0, mean, sigma])
     return popt
 
-def find_peak(x, y):
+def find_peak(wd, y):
+    x = np.copy(wd)
     popt = gaus_fitting(x, y)
     def gaus_minus(x, a, mean, sigma):
         return -gaus(x, a, mean, sigma)
@@ -89,7 +90,7 @@ def main(DEBUG):
     BF_GOAL = BASE + 'goal/bf_goal.yaml'
 
     images = sorted(glob.glob(IMAGE_PATH))
-    ROI = (35, 35) # heigh, width
+    ROI = (600, 600) # heigh, width
     windowWidth = 800
     ls_contrast = []
     for fname in images:

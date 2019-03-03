@@ -2,6 +2,7 @@ import time
 from math import cos, sin, pi
 import cv2
 import numpy as np
+import numpy.matlib
 import quaternion
 import glob
 import yaml
@@ -50,7 +51,9 @@ def get_cam_parameter(camBrand, FOV):
         M = np.mean(FOV/cmos) # Magnification
         WD = M*f  # Work distance (mm)
         # Magnification unit pixel to mm
-        Mpx2mm = M*cmos/reso*np.array([1, -1])
+        Mpx2mm = M*cmos/reso*np.array([1, 1])
+
+
     elif camBrand == 'toshiba':
         raise('Not supported camera') 
     elif camBrand == 'gazebo':
@@ -63,7 +66,7 @@ def get_cam_parameter(camBrand, FOV):
         # Magnification unit pixel to mm
         Mpx2mm = np.array([20.0/210.0, 20.0/210.0])*np.array([-1, 1])
     else:
-        raise('Not supported camera') 
+        raise('Not supported camera')
 
     return (cmtx, Mpx2mm)
 
@@ -75,37 +78,46 @@ def convert_center_ROSgoal(dq, Init_GOAL):
         init_goal = np.array(yaml.load(f), dtype='float')
 
     q0 = np.quaternion(init_goal[6], init_goal[3], init_goal[4], init_goal[5])
+ 
     H = np.identity(4)
-    H[3,0] = init_goal[0] + dq[0]
-    H[3,1] = init_goal[1] + dq[1]
-    H[3,2] = init_goal[2]
+    H[0, 3] = init_goal[0] + dq[0]
+    H[1, 3] = init_goal[1] + dq[1] 
+    H[2, 3] = init_goal[2]
     H[0:2, 0:2] =  np.matrix([[cos(dq[2]), -sin(dq[2])], [sin(dq[2]), cos(dq[2])]])
     q = q0*quaternion.from_rotation_matrix(H[0:3, 0:3])
-    goal = np.array([H[3,0], H[3,1], H[3,2], q.x, q.y, q.z, q.w])
+    goal = np.array([H[0,3], H[1,3], H[2,3], q.x, q.y, q.z, q.w])
     return goal
 
 def compute_compensation(BASE, IMAGE_PATH):
     # Generate ChArUco pattern
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
-    board = cv2.aruco.CharucoBoard_create(11, 9, 0.020, 0.010, dictionary)
-    img = board.draw((200*11,200*9))
+    board = cv2.aruco.CharucoBoard_create(11, 9, 0.010, 0.005, dictionary)
+    img = board.draw((100*11,100*9))
     cv2.imwrite(BASE + 'img/charuco.png',img)
 
     # Camera parameter
-    FOV = (0, 0) # (mm)
-    (cmtx, Mpx2mm) = get_cam_parameter('gazebo', FOV)
+    FOV = (133.7, 100.0) # (mm)
+    # (cmtx, Mpx2mm) = get_cam_parameter('gazebo', FOV)
+    (cmtx, Mpx2mm) = get_cam_parameter('basler', FOV)
 
     # Compute center coordinate in pixel
     frame = cv2.imread(IMAGE_PATH)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     ARcors, ARids, _ = cv2.aruco.detectMarkers(gray, dictionary)
-    cv2.aruco.drawDetectedMarkers(frame, ARcors, ARids)
+
+    # Draw markers in figure
+    img_markers = cv2.aruco.drawDetectedMarkers(frame, ARcors, ARids)
+    # cv2.namedWindow('Markers', cv2.WINDOW_NORMAL)
+    # cv2.resizeWindow('Markers', 1200, 800)
+    # cv2.imshow('Markers', img_markers)
+    # cv2.waitKey()
+
     x_uvec, y_uvec, ptCen, angle = cal_center_axis_vector(ARcors, ARids)
 
     # Compensate of pixel and mm
     dU = np.array(gray.shape)[::-1]/2 - ptCen
     dQ = Mpx2mm*dU[::-1]
-    
+
     # convert unit to meter
     dq = np.array([dQ[0]/1000, dQ[1]/1000, angle]) # dx, dy, angle
     
@@ -132,7 +144,7 @@ def main(DEBUG):
     
     # Set auto focus goal moved along z-axis of center goal
     n = 11 # number of goal
-    z = 0.04 # interval of movement
+    z = 0.06 # interval of movement in meter
     af_goals = np.ones((n, 7)) * ac_goal
     for ind, dz in enumerate(np.linspace(-z/2, z/2, 11)):
         af_goals[ind, 2] = ac_goal[2] + dz
