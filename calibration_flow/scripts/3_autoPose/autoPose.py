@@ -148,10 +148,11 @@ def main(DEBUG):
     with open(BF_GOAL) as f:
         bf_goal = np.array(yaml.load(f))
 
-    WD = bf_goal[2] # work distence(m)
+    # WD = bf_goal[2] # work distence(m)
+    WD = bf_goal[2] - 0.04
     # WD = 0.37
     pose_amount = 12 # Amount of camera pose
-    phi = 9 # polarangle 
+    phi = 15 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
 
     camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
@@ -235,18 +236,19 @@ def main(DEBUG):
     Flange.transform_by_rotation_mat(B0, refFrame=Base.pose)
     Flange.plot_frame(ax2, 'initFlange')
     # Flange to Camera
-    cmd_X = orientation.asRad((0, 0, 0.050, 0, 0, 90)).cmd()
+    cmd_X = orientation.asRad((-0.040, 0, 0.040, 0, 0, -90)).cmd()
     X = Camera.transform(cmd_X, refFrame=World.pose)
     Camera.transform(cmd_X, refFrame=Flange.pose)
     Camera.plot_frame(ax2, 'initCamera')
     # Camera to Pattern
+   
     cmd_A0 = orientation.asRad((0, 0, WD, 0, 180, 0)).cmd()
     A0 = Pattern.transform(cmd_A0, refFrame=World.pose)
     Pattern.transform(cmd_A0, refFrame=Camera.pose)
     Pattern.plot_frame(ax2, 'Pattern')
     # Base to Pattern
     Z = B0*X*A0
-    plt.show()
+    # plt.show()
     ##################
     # (Denso Robot) Pose calculation
     ##################
@@ -268,7 +270,7 @@ def main(DEBUG):
         Flange.transform_by_rotation_mat(iX, refFrame=Camera.pose)
         Flange.plot_frame(ax, '')
         # {Test Flange calculate from Z*A*X}
-        # Bs[i] = Z*As[i]*X
+        Bs[i] = Z*iAs[i]*iX
 
     plt.show()
 
@@ -285,9 +287,9 @@ def main(DEBUG):
         yaml.dump(Z.tolist(), f, default_flow_style=False)
         print('Save the Z to yaml data file.')
     
-    with open(Z2_PATH, 'w') as f:
-        yaml.dump(Z2.tolist(), f, default_flow_style=False)
-        print('Save the Z2 to yaml data file.')
+    # with open(Z2_PATH, 'w') as f:
+    #     yaml.dump(Z2.tolist(), f, default_flow_style=False)
+    #     print('Save the Z2 to yaml data file.')
 
     #################
     # Save as moveit command

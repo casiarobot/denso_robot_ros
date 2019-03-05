@@ -151,7 +151,7 @@ def main(DEBUG=True):
     Robot = hardward_controller.MoveGroupInteface()
     Camera = hardward_controller.camera_shooter()
     try:
-        # AutoCenter(Robot, Camera, path, DEBUG)
+        AutoCenter(Robot, Camera, path, DEBUG)
         # AutoFocus(Robot, Camera, path, DEBUG) 
         AutoPose(Robot, Camera, path, DEBUG)
         # CameraCalibration(Robot, Camera, path, DEBUG)

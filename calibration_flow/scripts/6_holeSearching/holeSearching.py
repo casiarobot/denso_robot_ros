@@ -80,7 +80,7 @@ def main(DEBUG):
         cv2.namedWindow('diamond', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('diamond', 1200, 800)
         cv2.imshow("diamond", img_with_diamond)   # display
-        cv2.waitKey(100)
+        cv2.waitKey(2000)
     cv2.destroyAllWindows()
 
     D = as_homogeneous_mat(rvec, tvec) # from Camera to Object

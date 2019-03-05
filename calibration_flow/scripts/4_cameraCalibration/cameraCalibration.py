@@ -64,11 +64,11 @@ def main(DEBUG, output_pattern_img=True):
     INTMAT = BASE + 'goal/camera_mat.yaml'
 
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
-    board = cv2.aruco.CharucoBoard_create(11, 9, 0.020, 0.010, dictionary)
+    board = cv2.aruco.CharucoBoard_create(11, 9, 0.010, 0.005, dictionary)
 
     #Dump the calibration board to a file
     if output_pattern_img:
-        img = board.draw((200*11,200*9))
+        img = board.draw((100*11,100*9))
         cv2.imwrite(BASE +'charuco.png',img)
 
     allCHCors = []
@@ -91,7 +91,7 @@ def main(DEBUG, output_pattern_img=True):
         cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('frame', 1200, 800)
         cv2.imshow('frame', frame)
-        cv2.waitKey(1)
+        cv2.waitKey(10)
 
     cv2.destroyAllWindows()
     imsize = gray.shape
@@ -99,6 +99,7 @@ def main(DEBUG, output_pattern_img=True):
     print(retval)
     # ext_mat: Extrinsic matrix from Pattern to Camera
     ext_mat = as_homogeneous_mat(rvecs, tvecs)
+    
 
     with open(EXTMAT, 'w') as f:
         yaml.dump(ext_mat.tolist(), f, default_flow_style=False)
