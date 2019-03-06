@@ -8,9 +8,7 @@ import time
 import hardward_controller
 import subprocess
 
-current_goal = np.zeros((1,7))
-
-def AutoCenter(Robot, Camera, path, DEBUG):
+def AutoCenter(Robot, Camera, path, SIM, DEBUG):
     ###############################
     ### Auto Center
     ###############################
@@ -19,9 +17,8 @@ def AutoCenter(Robot, Camera, path, DEBUG):
     ACenter_GOAL = BASE + 'goal/ac_goal.yaml'
 
     # Initial shot
-    # goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
-    goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
-
+    goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
+    # goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
 
     with open(Init_GOAL, 'w') as f:
         yaml.dump(list(goal), f, default_flow_style=False)
@@ -31,7 +28,7 @@ def AutoCenter(Robot, Camera, path, DEBUG):
     image = Camera.trigger(BASE + 'img/init.bmp')
 
     # Compute companation
-    cmd = 'python ' + path['ACenter'] + 'autoCenter.py ' + str(DEBUG)
+    cmd = 'python ' + path['ACenter'] + 'autoCenter.py ' + str(SIM) + ' ' + str(DEBUG) 
     subprocess.call(cmd, shell=True)
     with open(ACenter_GOAL) as f:
         goal = yaml.load(f)
@@ -43,7 +40,7 @@ def AutoCenter(Robot, Camera, path, DEBUG):
     image = Camera.trigger(BASE + 'img/center.bmp')
     print("============ End Auto center process ============")
 
-def AutoFocus(Robot, Camera, path, DEBUG):
+def AutoFocus(Robot, Camera, path, SIM, DEBUG):
     ###############################
     ### Step 2: Auto Focus
     ###############################
@@ -51,16 +48,17 @@ def AutoFocus(Robot, Camera, path, DEBUG):
     AFocus_GOAL = BASE + 'goal/af_goal.yaml'
     BFocus_GOAL = BASE + 'goal/bf_goal.yaml'
 
-    with open(AFocus_GOAL) as f:
-        af_goals = yaml.load(f)
+    if not SIM:
+        with open(AFocus_GOAL) as f:
+            af_goals = yaml.load(f)
 
-    for ind, goal in enumerate(af_goals):
-        Robot.go_to_pose_goal(goal)
-        time.sleep(1)
-        img_name = BASE + 'img/af' + str(ind+1).zfill(2) + '.bmp'
-        image = Camera.trigger(img_name)
+        for ind, goal in enumerate(af_goals):
+            Robot.go_to_pose_goal(goal)
+            time.sleep(1)
+            img_name = BASE + 'img/af' + str(ind+1).zfill(2) + '.bmp'
+            image = Camera.trigger(img_name)
 
-    cmd = 'python ' + path['AFocus'] + 'autoFocus.py ' + str(DEBUG)
+    cmd = 'python ' + path['AFocus'] + 'autoFocus.py ' + str(SIM) + ' ' + str(DEBUG) 
     subprocess.call(cmd, shell=True)
     with open(BFocus_GOAL) as f:
         goal = yaml.load(f)
@@ -71,7 +69,7 @@ def AutoFocus(Robot, Camera, path, DEBUG):
     image = Camera.trigger(BASE + 'img/bestFocused.bmp')
     print("============ End Auto focus process ============")
 
-def AutoPose(Robot, Camera, path, DEBUG):
+def AutoPose(Robot, Camera, path, SIM, DEBUG):
     ###############################
     ### Step 3: Auto Pose
     # ###############################
@@ -80,7 +78,7 @@ def AutoPose(Robot, Camera, path, DEBUG):
     POSE_GOAL = BASE + 'goal/ap_goal.yaml'
     BFocus_GOAL = AF_BASE + 'goal/bf_goal.yaml'
     
-    cmd = 'python ' + path['APose'] + 'autoPose.py ' + str(DEBUG)
+    cmd = 'python ' + path['APose'] + 'autoPose.py ' + str(SIM) + ' ' + str(DEBUG) 
     subprocess.call(cmd, shell=True)
     with open(POSE_GOAL) as f:
         pose_goals = yaml.load(f)
@@ -92,26 +90,18 @@ def AutoPose(Robot, Camera, path, DEBUG):
         time.sleep(1)
         img_name = BASE + 'img/ap' + str(ind+1).zfill(2) + '.bmp'
         image = Camera.trigger(img_name)
-
-def CameraCalibration(Robot, Camera, path, DEBUG):
-    ###############################
-    ### Step 4: Camera Calibration
-    ###############################
-    BASE = path['CCalibration'] if DEBUG else path['ROOT']
-    CC_GOAL = BASE + 'goal/cc_goal.yaml'
+    print("============ End Auto Pose process ============")
     
-    cmd = 'python ' + path['CCalibration'] + 'cameraCalibration.py ' + str(DEBUG)
+def CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG):
+    ###############################
+    ### Step 4: Camera Pose Estimation
+    ###############################
+    if SIM:
+        cmd = 'python ' + path['PoseEstimation'] + 'cameraCalibration.py ' + str(DEBUG)
+    else:
+        cmd = 'python ' + path['PoseEstimation'] + 'solvePnP.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
-
-    # with open(CC_GOAL) as f:
-    #     pose_goals = yaml.load(f)
-    #     print('Get pose goal from yaml file.')
-    # for ind, goal in enumerate(pose_goals):
-    #     Robot.go_to_pose_goal(goal)
-    #     print("============ Press `Enter` to execute camera trigger save as ap{}.bmp".format(ind))
-    #     time.sleep(1)
-    #     img_name = BASE + 'img/cc' + str(ind+1).zfill(2) + '.bmp'
-    #     image = Camera.trigger(img_name)
+    print("============ End Camera Pose Estimation process ============")
 
 def SolveXZ(Robot, Camera, path, DEBUG):
     ###############################``
@@ -139,7 +129,7 @@ def HoleSearching(Robot, Camera, path, DEBUG):
     cmd = 'python ' + path['holeSearching'] + 'holeSearching.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
 
-def main(DEBUG=True):
+def main(SIM, DEBUG=True):
     # PATH SETTING
     CONFIG = 'config.yaml'
     with open(CONFIG) as f:
@@ -151,11 +141,11 @@ def main(DEBUG=True):
     Robot = hardward_controller.MoveGroupInteface()
     Camera = hardward_controller.camera_shooter()
     try:
-        AutoCenter(Robot, Camera, path, DEBUG)
-        # AutoFocus(Robot, Camera, path, DEBUG) 
-        AutoPose(Robot, Camera, path, DEBUG)
-        # CameraCalibration(Robot, Camera, path, DEBUG)
-        # SolveXZ(Robot, Camera, path, DEBUG)
+        AutoCenter(Robot, Camera, path, SIM, DEBUG)
+        AutoFocus(Robot, Camera, path, SIM, DEBUG) 
+        AutoPose(Robot, Camera, path, SIM, DEBUG)
+        CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG)
+        SolveXZ(Robot, Camera, path, DEBUG)
         # HoleSearching(Robot, Camera, path, DEBUG)
 
         print("============ Calibration process complete!")
@@ -166,6 +156,7 @@ def main(DEBUG=True):
         return
 
 if __name__ == '__main__':
-    main()
+    SIM = True
+    main(SIM)
   
 

@@ -42,12 +42,12 @@ def main(DEBUG):
         path = yaml.load(f)
 
     BASE = path['holeSearching'] if DEBUG else path['ROOT']
-    CC_BASE = path['CCalibration'] if DEBUG else path['ROOT']
+    PE_BASE = path['PoseEstimation'] if DEBUG else path['ROOT']
     XZ_BASE = path['solveXZ'] if DEBUG else path['ROOT']
 
     Init_Hole_GOAL = BASE + 'goal/init_hole.yaml'
     IMAGE_PATH = BASE + 'img/hs.bmp'
-    CAMERA_MAT = CC_BASE + 'goal/camera_mat.yaml'
+    CAMERA_MAT = PE_BASE + 'goal/camera_mat.yaml'
     HX_PATH = XZ_BASE + 'goal/HX.yaml'
     D_MAT = BASE + 'goal/D.yaml'
     HW_MAT = BASE + 'goal/HW.yaml'
@@ -58,7 +58,7 @@ def main(DEBUG):
     markerLength = 0.25/40.0   # Here, our measurement unit is m.
     arucoParams = cv2.aruco.DetectorParameters_create()
     with open(CAMERA_MAT) as f:
-        cameraMatrix = np.array (yaml.load(f))
+        cameraMatrix = np.array(yaml.load(f))
         distCoeffs = np.array([[0.0, 0.0, 0.0, 0.0, 0.0]]) # Assume to zero
 
     images = sorted(glob.glob(IMAGE_PATH))

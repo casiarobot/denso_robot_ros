@@ -8,7 +8,7 @@ import yaml
 
 
 
-def __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH):
+def __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH):
     with open(A_PATH) as f:
         As = np.array(yaml.load(f))
         print('Get As from yaml file.')
@@ -21,10 +21,8 @@ def __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH):
     with open(Z_PATH) as f:
         Z = np.array(yaml.load(f))
         print('Get Z from yaml file.')
-    with open(Z2_PATH) as f:
-        Z2 = np.array(yaml.load(f))
-        print('Get Z2 from yaml file.')
-    return As, Bs, X, Z, Z2
+
+    return As, Bs, X, Z
 
 def __create_unit_vector__(thetaS, phiS, r=1):
     '''
@@ -46,7 +44,7 @@ def __create_unit_quaternion__(theta, thetaS, phiS):
     return np.quaternion(cos(t), v[0]*sin(t), v[1]*sin(t), v[2]*sin(t))
 
 def __solveXZ__(As, Bs):
-    def objRot(X, HAs, HBs):
+    def objRot(X, As, Bs):
         HX = np.matlib.identity(4)
         HZ = np.matlib.identity(4)
         qX = __create_unit_quaternion__(*X[0:3])
@@ -55,10 +53,10 @@ def __solveXZ__(As, Bs):
         HZ[0:3, 0:3] = quaternion.as_rotation_matrix(qZ)
         HX[0:3, 3] = np.reshape(X[6:9], (3,1))
         HZ[0:3, 3] = np.reshape(X[9:12], (3,1))
-        fval = np.zeros((len(HBs), 12))
-        for i, (HAi, HBi) in enumerate(zip(HAs, HBs)):
-            error = HBi - HZ*HAi*HX
-            
+        fval = np.zeros((len(Bs), 12))
+        for i, (A, B) in enumerate(zip(As, Bs)):
+            # error = HBi - HZ*HAi*HX
+            error = HZ - B*HX*A
             fval[i, :] = np.array(error[0:3, :]).flatten()
         
         return fval.flatten()
@@ -81,13 +79,13 @@ def __solveXZ__(As, Bs):
 
     return HX, HZ
 
-def test_solution(As, Bs, X, Z):
+def calResidual(As, Bs, X, Z):
     residual = np.zeros(len(As))
     for i, (A, B) in enumerate(zip(As, Bs)):
-        residual[i] = np.linalg.norm(B - Z*A*X)
+        # residual[i] = np.linalg.norm(B - Z*A*X)
+        residual[i] = np.linalg.norm(Z - B*X*A)
         
-
-    return residual
+    return np.sum(residual)
 
 def __cal_axis_angle_from_q__(q):
     theta = 2*np.arccos(q.w)
@@ -119,41 +117,32 @@ def main(DEBUG):
     
     BASE = path['solveXZ'] if DEBUG else path['ROOT']
     AP_BASE = path['APose'] if DEBUG else path['ROOT']
-    CC_BASE = path['CCalibration'] if DEBUG else path['ROOT']
+    PE_BASE = path['PoseEstimation'] if DEBUG else path['ROOT']
 
-    A_PATH = CC_BASE + 'goal/As.yaml'
+    A_PATH = PE_BASE + 'goal/As.yaml'
     B_PATH = AP_BASE + 'goal/Bs.yaml'
-    X_PATH = AP_BASE + 'goal/X.yaml'
-    Z_PATH = AP_BASE + 'goal/Z.yaml'
-    Z2_PATH = AP_BASE + 'goal/Z2.yaml'
-    EX_PATH = BASE + 'goal/EX.yaml'
-    HX_PATH = BASE + 'goal/HX.yaml'
-    HZ_PATH = BASE + 'goal/HZ.yaml'
+    X_PATH = AP_BASE + 'goal/X.yaml' # initial guess
+    Z_PATH = AP_BASE + 'goal/Z.yaml' # initial guess, center
 
-    As, Bs, X, Z, Z2 = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH, Z2_PATH)
+    HX_PATH = BASE + 'goal/HX.yaml' # optimal solution
+    HZ_PATH = BASE + 'goal/HZ.yaml' # optimal solution, left-up point
+
+    As, Bs, X, Z = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH)
     HX, HZ = __solveXZ__(As, Bs)
 
-
-    # print(HX)
-    # print(HZ)
-    r = test_solution(As, Bs, X, HZ)
-    r2 = test_solution(As, Bs, X, Z2)
+    r = calResidual(As, Bs, HX, HZ)
+    print(r)
 
     pError, oError = calPositionAndOrientationError(X, HX)
     print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
 
     with open(HX_PATH, 'w') as f:
-        HX = np.linalg.inv(HX) # from flange to camera
         yaml.dump(HX.tolist(), f, default_flow_style=False)
         print('Save the solved X matrix to yaml data file.')
     with open(HZ_PATH, 'w') as f:
         yaml.dump(HZ.tolist(), f, default_flow_style=False)
         print('Save the solved Z matrix to yaml data file.')
 
-    with open(EX_PATH, 'w') as f:
-        X = np.linalg.inv(X) # from flange to camera
-        yaml.dump(X.tolist(), f, default_flow_style=False)
-        print('Save the exact X matrix to yaml data file.')
 
 if __name__ == "__main__":
     import sys

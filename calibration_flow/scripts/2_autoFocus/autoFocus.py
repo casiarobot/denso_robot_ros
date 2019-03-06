@@ -78,7 +78,26 @@ def find_peak(wd, y):
     peak = (x_peak, gaus(x_peak, *popt))
     return (x, gaus(x, *popt), peak)
 
-def main(DEBUG):
+def main_gazebo(DEBUG):
+    # PATH SETTING
+    CONFIG = 'config.yaml'
+    with open(CONFIG) as f:
+        path = yaml.load(f)
+        
+    BASE = path['AFocus'] if DEBUG else path['ROOT']
+    AF_GOAL = BASE + 'goal/af_goal.yaml'
+    BF_GOAL = BASE + 'goal/bf_goal.yaml'
+
+    with open(AF_GOAL) as f:
+        af_goals = np.array(yaml.load(f))
+
+    # Save best focal work distance
+    n = len(af_goals)
+    bestFocus_goals = af_goals[0, :]
+    with open(BF_GOAL, 'w') as f:
+        yaml.dump(bestFocus_goals.tolist(), f, default_flow_style=False)
+
+def main_denso(DEBUG):
     # PATH SETTING
     CONFIG = 'config.yaml'
     with open(CONFIG) as f:
@@ -127,9 +146,17 @@ def main(DEBUG):
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
+    
     import sys
+    def str2bool(s):
+      return s.lower() in ("yes", "true", "t", "1")
+
     if len(sys.argv) >= 2:
-        DEBUG = sys.argv[1]
-    else:
+        SIM = str2bool(sys.argv[1])
+        # DEBUG = str2bool(sys.argv[2])
         DEBUG = True
-    main(DEBUG=DEBUG)
+    else:
+        SIM = True
+        DEBUG = True
+
+    main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)

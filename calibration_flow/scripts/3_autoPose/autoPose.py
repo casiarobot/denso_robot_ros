@@ -128,7 +128,7 @@ def as_MatrixGoal(rosGoal):
     H[0:3, 0:3] = quaternion.as_rotation_matrix(q)
     return H
 
-def main(DEBUG):
+def main_gazebo(DEBUG):
     # import os.path
     # PATH SETTING
     CONFIG = 'config.yaml'
@@ -148,11 +148,10 @@ def main(DEBUG):
     with open(BF_GOAL) as f:
         bf_goal = np.array(yaml.load(f))
 
-    # WD = bf_goal[2] # work distence(m)
-    WD = bf_goal[2] - 0.04
-    # WD = 0.37
+    cam_pose = [0, 0, 0.050, 0, 0, -90] # pose wrt Flange in meter: (x,y,z,Rx,Ry,Rz)
+    WD = bf_goal[2] - cam_pose[2] # work distence from camera to pattern(m)
     pose_amount = 12 # Amount of camera pose
-    phi = 15 # polarangle 
+    phi = 10 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
 
     camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
@@ -160,8 +159,8 @@ def main(DEBUG):
     with open(CAMERA_POSE_PATH, 'w') as f:
         yaml.dump(camOrientations.tolist(), f, default_flow_style=False)
         print('Save the camera pose data to yaml data file.')
-    
-    # Verify data 
+
+    # data visualization
     World = frame3D.Frame(np.matlib.identity(4))
     Pattern = frame3D.Frame(World.pose)
     Image = frame3D.Frame(Pattern.pose)
@@ -170,94 +169,34 @@ def main(DEBUG):
     Base = frame3D.Frame(Pattern.pose)
     Flange_test = frame3D.Frame(Pattern.pose)
     orientation = frame3D.Orientation()
-    ax = frame3D.make_3D_fig(axSize=0.45 )
-    ax2 = frame3D.make_3D_fig(axSize=0.45 )
-    # #################
-    # # Initial 
-    # #################
-    # # {Pattern as World}
-    # Pattern.plot_frame(ax, 'Pattern')
-
-    # # {Camera}
-    # cmd_A0 = orientation.asRad((0, 0, WD, 0, 180, 0)).cmd()
-    # A0 = Camera.transform(cmd_A0, refFrame=World.pose)
-    # Camera.transform(cmd_A0, refFrame=Pattern.pose)
-    # Camera.plot_frame(ax, 'init_camera')
-    
-    # # {Flange}
-    # cmd_X = orientation.asRad((0, 0, -0.050, 0, 0, 90)).cmd()
-    # X = Flange.transform(cmd_X, refFrame=World.pose)
-    # Flange.transform(cmd_X, refFrame=Camera.pose)
-    # Flange.plot_frame(ax, 'init_flange')
-
-    # # {Base}
-    # cmd_Z = orientation.asRad((0.3, 0, 0, 0, 0, 90)).cmd()
-    # Z = Base.transform(cmd_Z, refFrame=World.pose)
-    # cmd_Z = orientation.asRad((0, 0.3, 0, 0, 0, -90)).cmd()
-    # Base.transform(cmd_Z, refFrame=Pattern.pose)
-    # Base.plot_frame(ax, 'Base')
-
-    # # {Image}
-    # cmd_w = orientation.asRad((0.09, 0.11, 0, 0, 0, 180)).cmd()
-    # w = Image.transform(cmd_w, refFrame=World.pose)
-    # Z2 = Z*w
-    # # Image.transform(cmd_w, refFrame=Pattern.pose)
-    # Image.transform_by_rotation_mat(Z2, refFrame=Base.pose)
-    # Image.plot_frame(ax, 'Image')
-
-    # # {Test Flange calculate from Z*A*X}
-    # B = Z*A0*X
-    # Flange_test.transform_by_rotation_mat(B, refFrame=Base.pose)
-    # Flange_test.plot_frame(ax, 'Test')
-
-    # #################
-    # # Calculate camera pose 
-    # #################
-
-    # As = np.zeros((pose_amount,4,4))
-    # Bs = np.zeros((pose_amount,4,4))
-    # for i, camOrientation in enumerate(camOrientations):
-    #     cmd_A = orientation.asItself(camOrientation).cmd()
-    #     As[i] = Camera.transform(cmd_A, refFrame=World.pose)
-    #     Camera.transform(cmd_A, refFrame=Pattern.pose)
-    #     # Camera.plot_frame(ax, '')    
-    #     Flange.transform(cmd_X, refFrame=Camera.pose)
-    #     # Flange.plot_frame(ax, '')
-    #     # {Test Flange calculate from Z*A*X}
-    #     Bs[i] = Z*As[i]*X
+    ax = frame3D.make_3D_fig(axSize=0.45)
 
     ##################
-    # (Denso Robot) initial stage for calculating Z
+    # Determine Z
     ##################    
     # Base as World coordinate
-    Base.plot_frame(ax2, 'Base')
+    Base.plot_frame(ax, 'Base')
     # Base to Flange 
     B0 = as_MatrixGoal(bf_goal)
     Flange.transform_by_rotation_mat(B0, refFrame=Base.pose)
-    Flange.plot_frame(ax2, 'initFlange')
+    Flange.plot_frame(ax, 'initFlange')
     # Flange to Camera
-    cmd_X = orientation.asRad((-0.040, 0, 0.040, 0, 0, -90)).cmd()
+    cmd_X = orientation.asRad(cam_pose).cmd()
     X = Camera.transform(cmd_X, refFrame=World.pose)
     Camera.transform(cmd_X, refFrame=Flange.pose)
-    Camera.plot_frame(ax2, 'initCamera')
+    Camera.plot_frame(ax, 'initCamera')
     # Camera to Pattern
    
     cmd_A0 = orientation.asRad((0, 0, WD, 0, 180, 0)).cmd()
     A0 = Pattern.transform(cmd_A0, refFrame=World.pose)
     Pattern.transform(cmd_A0, refFrame=Camera.pose)
-    Pattern.plot_frame(ax2, 'Pattern')
+    Pattern.plot_frame(ax, 'Pattern')
     # Base to Pattern
     Z = B0*X*A0
-    # plt.show()
+    
     ##################
-    # (Denso Robot) Pose calculation
+    # Pose calculation
     ##################
-    # Pattern as World coordinate
-    Pattern.plot_frame(ax, 'Pattern')
-    # Plot Base from iZ
-    Base.transform_by_rotation_mat(np.linalg.inv(Z), refFrame=Pattern.pose)
-    Base.plot_frame(ax, 'Base')
-
     iAs = np.zeros((pose_amount,4,4))
     Bs = np.zeros((pose_amount,4,4))
     iX = np.linalg.inv(X)
@@ -268,12 +207,13 @@ def main(DEBUG):
         Camera.plot_frame(ax, '')    
 
         Flange.transform_by_rotation_mat(iX, refFrame=Camera.pose)
-        Flange.plot_frame(ax, '')
+        # Flange.plot_frame(ax, '')
         # {Test Flange calculate from Z*A*X}
         Bs[i] = Z*iAs[i]*iX
 
-    plt.show()
-
+    plt.show(block=False)
+    plt.pause(0.5)
+    plt.close()
 
     with open(Bs_PATH, 'w') as f:
         yaml.dump(Bs.tolist(), f, default_flow_style=False)
@@ -299,10 +239,124 @@ def main(DEBUG):
         yaml.dump(goals.tolist(), f, default_flow_style=False)
         print('Save the ROS goal to yaml data file.')
 
+def main_denso(DEBUG):
+    # PATH SETTING
+    CONFIG = 'config.yaml'
+    with open(CONFIG) as f:
+        path = yaml.load(f)
+
+    BASE = path['APose'] if DEBUG else path['ROOT']
+    AF_BASE = path['AFocus'] if DEBUG else path['ROOT']
+    BF_GOAL = AF_BASE + 'goal/bf_goal.yaml'
+    CAMERA_POSE_PATH = BASE + 'goal/camera_pose.yaml'
+    ROS_GOAL_PATH = BASE + 'goal/ap_goal.yaml'
+    Bs_PATH = BASE + 'goal/Bs.yaml'
+    X_PATH = BASE + 'goal/X.yaml'
+    Z_PATH = BASE + 'goal/Z.yaml'
+    Z2_PATH = BASE + 'goal/Z2.yaml'
+
+    with open(BF_GOAL) as f:
+        bf_goal = np.array(yaml.load(f))
+
+    cam_pose = [-0.040, 0, 0.040, 0, 0, -90] # pose wrt Flange in meter: (x,y,z,Rx,Ry,Rz)
+    WD = bf_goal[2] - cam_pose[2] # work distence from camera to pattern(m)
+    pose_amount = 12 # Amount of camera pose
+    phi = 15 # polarangle 
+    theta_interval = 30 # interval of azimuthal angle
+
+    camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
+                                    theta_interval, CAMERA_POSE_PATH)                    
+    with open(CAMERA_POSE_PATH, 'w') as f:
+        yaml.dump(camOrientations.tolist(), f, default_flow_style=False)
+        print('Save the camera pose data to yaml data file.')
+    
+    # data visualization
+    World = frame3D.Frame(np.matlib.identity(4))
+    Pattern = frame3D.Frame(World.pose)
+    Image = frame3D.Frame(Pattern.pose)
+    Camera = frame3D.Frame(Pattern.pose)
+    Flange = frame3D.Frame(Pattern.pose)
+    Base = frame3D.Frame(Pattern.pose)
+    Flange_test = frame3D.Frame(Pattern.pose)
+    orientation = frame3D.Orientation()
+    ax = frame3D.make_3D_fig(axSize=0.45)
+
+    ##################
+    # Determine Z
+    ##################    
+    # Base as World coordinate
+    Base.plot_frame(ax, 'Base')
+    # Base to Flange 
+    B0 = as_MatrixGoal(bf_goal)
+    Flange.transform_by_rotation_mat(B0, refFrame=Base.pose)
+    Flange.plot_frame(ax, 'initFlange')
+    # Flange to Camera
+    cmd_X = orientation.asRad(cam_pose).cmd()
+    X = Camera.transform(cmd_X, refFrame=World.pose)
+    Camera.transform(cmd_X, refFrame=Flange.pose)
+    Camera.plot_frame(ax, 'initCamera')
+    # Camera to Pattern
+   
+    cmd_A0 = orientation.asRad((0, 0, WD, 0, 180, 0)).cmd()
+    A0 = Pattern.transform(cmd_A0, refFrame=World.pose)
+    Pattern.transform(cmd_A0, refFrame=Camera.pose)
+    Pattern.plot_frame(ax, 'Pattern')
+    # Base to Pattern
+    Z = B0*X*A0
+    
+    ##################
+    # Pose calculation
+    ##################
+
+    iAs = np.zeros((pose_amount,4,4))
+    Bs = np.zeros((pose_amount,4,4))
+    iX = np.linalg.inv(X)
+    for i, camOrientation in enumerate(camOrientations):
+        cmd_iA = orientation.asItself(camOrientation).cmd()
+        iAs[i] = Camera.transform(cmd_iA, refFrame=World.pose)
+        Camera.transform(cmd_iA, refFrame=Pattern.pose)
+        Camera.plot_frame(ax, '')    
+
+        Flange.transform_by_rotation_mat(iX, refFrame=Camera.pose)
+        # Flange.plot_frame(ax, '')
+        # {Test Flange calculate from Z*A*X}
+        Bs[i] = Z*iAs[i]*iX
+
+    plt.show(block=False)
+    plt.pause(0.5)
+    plt.close()
+
+    with open(Bs_PATH, 'w') as f:
+        yaml.dump(Bs.tolist(), f, default_flow_style=False)
+        print('Save the Bs to yaml data file.')
+    
+    with open(X_PATH, 'w') as f:
+        yaml.dump(X.tolist(), f, default_flow_style=False)
+        print('Save the X to yaml data file.')
+    
+    with open(Z_PATH, 'w') as f:
+        yaml.dump(Z.tolist(), f, default_flow_style=False)
+        print('Save the Z to yaml data file.')
+
+    #################
+    # Save as moveit command
+    #################
+    goals = as_ROSgoal(Bs)
+    with open(ROS_GOAL_PATH, 'w') as f:
+        yaml.dump(goals.tolist(), f, default_flow_style=False)
+        print('Save the ROS goal to yaml data file.')
+
 if __name__ =='__main__':
     import sys
+    def str2bool(s):
+      return s.lower() in ("yes", "true", "t", "1")
+
     if len(sys.argv) >= 2:
-        DEBUG = sys.argv[1]
-    else:
+        SIM = str2bool(sys.argv[1])
+        # DEBUG = str2bool(sys.argv[2])
         DEBUG = True
-    main(DEBUG=DEBUG)
+    else:
+        SIM = True
+        DEBUG = True
+
+    main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)
