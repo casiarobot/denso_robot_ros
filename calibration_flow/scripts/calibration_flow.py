@@ -17,8 +17,10 @@ def AutoCenter(Robot, Camera, path, SIM, DEBUG):
     ACenter_GOAL = BASE + 'goal/ac_goal.yaml'
 
     # Initial shot
-    goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
-    # goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
+    if SIM:
+        goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
+    else:
+        goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
 
     with open(Init_GOAL, 'w') as f:
         yaml.dump(list(goal), f, default_flow_style=False)
@@ -109,26 +111,31 @@ def SolveXZ(Robot, Camera, path, DEBUG):
     ###############################    
     cmd = 'python ' + path['solveXZ'] + 'solveXZ.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
-
+    print("============ End SolveXZ process ============")
 def HoleSearching(Robot, Camera, path, DEBUG):
     ###############################
     ### Step 6: Hole searching
     ###############################
     BASE = path['holeSearching'] if DEBUG else path['ROOT']
     Init_Hole_GOAL = BASE + 'goal/init_hole.yaml'
-    
-    with open(Init_Hole_GOAL) as f:
-        pose_goal = yaml.load(f)
-        print('Get pose goal from yaml file.')
-    Robot.go_to_pose_goal(pose_goal)
-    print("============ Press `Enter` to execute camera trigger save as hs.bmp")
+
+    if SIM:
+        goal = (0.0989688762978, -0.290417812266, 0.409766763058, 0.977195181237, 0.0266658008638, 0.210581453508, 0.00582788734334)
+    else:
+        goal = (0.139019192749, 0.314629730736, 0.3611393565832349, 0.140137191122, -0.99013156264, -0.000542796445765, 0.000872754540243)
+        
+    with open(Init_Hole_GOAL, 'w') as f:
+        yaml.dump(list(goal), f, default_flow_style=False)
+
+    Robot.go_to_pose_goal(goal)
+    print("============ save as hs.bmp")
     time.sleep(1)
     img_name = BASE + 'img/hs.bmp'
     image = Camera.trigger(img_name)
 
     cmd = 'python ' + path['holeSearching'] + 'holeSearching.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
-
+    print("============ End HoleSearching process ============")
 def main(SIM, DEBUG=True):
     # PATH SETTING
     CONFIG = 'config.yaml'
@@ -146,7 +153,7 @@ def main(SIM, DEBUG=True):
         AutoPose(Robot, Camera, path, SIM, DEBUG)
         CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG)
         SolveXZ(Robot, Camera, path, DEBUG)
-        # HoleSearching(Robot, Camera, path, DEBUG)
+        HoleSearching(Robot, Camera, path, DEBUG)
 
         print("============ Calibration process complete!")
     
@@ -156,7 +163,7 @@ def main(SIM, DEBUG=True):
         return
 
 if __name__ == '__main__':
-    SIM = True
+    SIM = False
     main(SIM)
   
 

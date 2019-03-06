@@ -3,6 +3,7 @@
 
 
 import numpy as np
+import numpy.matlib
 import quaternion
 import cv2
 import glob
@@ -12,9 +13,9 @@ import matplotlib.pyplot as plt
 
 def as_homogeneous_mat(rvec, tvec):
     # Extrinsic parameter from Camera to Object
-    mat = np.identity(4)
+    mat = np.matlib.identity(4)
     mat[0:3, 0:3] = cv2.Rodrigues(rvec)[0]
-    mat[0:3 ,3] = tvec.flatten()
+    mat[0:3 ,3] = tvec.reshape(3,1)
     return mat
 
 def __cal_axis_angle_from_q__(q):
@@ -80,13 +81,13 @@ def main(DEBUG):
         cv2.namedWindow('diamond', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('diamond', 1200, 800)
         cv2.imshow("diamond", img_with_diamond)   # display
-        cv2.waitKey(2000)
+        cv2.waitKey(100)
     cv2.destroyAllWindows()
 
     D = as_homogeneous_mat(rvec, tvec) # from Camera to Object
     with open(D_MAT, 'w') as f:
-            yaml.dump(D.tolist(), f, default_flow_style=False)
-            print('Save the D matrix to yaml data file.')
+        yaml.dump(D.tolist(), f, default_flow_style=False)
+        print('Save the D matrix to yaml data file.')
 
     #################
     # Testing 
@@ -121,20 +122,20 @@ def main(DEBUG):
     Camera.transform_by_rotation_mat(X, refFrame=Flange.pose)
     Workpiece.transform_by_rotation_mat(D, refFrame=Camera.pose)
     
-    cmd_W = orientation.asRad((-0.06, -0.3, 0.011, 180, 180, 0)).cmd()
-    W2 = Workpiece.transform(cmd_W, refFrame=World.pose)
-    with open(EW_MAT, 'w') as f:
-        yaml.dump(W2.tolist(), f, default_flow_style=False)
-        print('Save the exact W matrix to yaml data file.')
+    # cmd_W = orientation.asRad((-0.06, -0.3, 0.011, 180, 180, 0)).cmd()
+    # W2 = Workpiece.transform(cmd_W, refFrame=World.pose)
+    # with open(EW_MAT, 'w') as f:
+    #     yaml.dump(W2.tolist(), f, default_flow_style=False)
+    #     print('Save the exact W matrix to yaml data file.')
 
-    pError, oError = calPositionAndOrientationError(W, W2)
-    print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
+    # pError, oError = calPositionAndOrientationError(W, W2)
+    # print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
 
     Base.plot_frame(ax, 'Base')
     Camera.plot_frame(ax, 'Camera') 
     Flange.plot_frame(ax, 'Flange') 
     Workpiece.plot_frame(ax, 'Workpiece')
-    # plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":

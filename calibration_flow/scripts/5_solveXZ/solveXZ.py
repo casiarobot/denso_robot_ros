@@ -84,8 +84,8 @@ def calResidual(As, Bs, X, Z):
     for i, (A, B) in enumerate(zip(As, Bs)):
         # residual[i] = np.linalg.norm(B - Z*A*X)
         residual[i] = np.linalg.norm(Z - B*X*A)
-        
-    return np.sum(residual)
+    
+    return residual
 
 def __cal_axis_angle_from_q__(q):
     theta = 2*np.arccos(q.w)

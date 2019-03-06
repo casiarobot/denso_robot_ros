@@ -28,10 +28,10 @@ def as_homogeneous_mat(rvecs, tvecs):
         As[i, 0:3 ,3] = tvec.flatten()
         As[i, 3, 3] = 1.0
     
-    iAs = np.zeros((pose_amount, 4, 4))
-    for i, A in enumerate(As):
-        iAs[i] = np.linalg.inv(A) # (Pattern to Camera)
-    return As, iAs
+    # iAs = np.zeros((pose_amount, 4, 4))
+    # for i, A in enumerate(As):
+    #     iAs[i] = np.linalg.inv(A) # (Pattern to Camera)
+    return As
 
 def as_ROSgoal(Homo_mats):
     '''
@@ -100,10 +100,10 @@ def main(DEBUG, output_pattern_img=True):
     cv2.destroyAllWindows()
     imsize = gray.shape
     # ext_mat: Extrinsic matrix from Pattern to Camera
-    As, iAs = as_homogeneous_mat(rvecs, tvecs)
+    As = as_homogeneous_mat(rvecs, tvecs)
     
     with open(EXTMAT, 'w') as f:
-        yaml.dump(iAs.tolist(), f, default_flow_style=False)
+        yaml.dump(As.tolist(), f, default_flow_style=False)
         print('Save the Extrinsic matrix to yaml data file.')
 
     with open(INTMAT_CP, 'w') as f:
