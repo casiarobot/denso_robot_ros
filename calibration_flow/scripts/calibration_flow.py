@@ -18,7 +18,9 @@ def AutoCenter(Robot, Camera, path, SIM, DEBUG):
 
     # Initial shot
     if SIM:
-        goal = (0.3, -0.03, 0.5, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
+        # goal = (0.3, -0.03, 0.4, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
+        # goal = (0.26, 0.0, 0.399978956713, 0.00106130271845, 0.999999396927, 0.000280212483897, 3.55297433221e-05)
+        goal = (0.3, 0.0, 0.4, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
     else:
         goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
 
@@ -112,17 +114,23 @@ def SolveXZ(Robot, Camera, path, DEBUG):
     cmd = 'python ' + path['solveXZ'] + 'solveXZ.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
     print("============ End SolveXZ process ============")
-def HoleSearching(Robot, Camera, path, DEBUG):
+
+def HoleSearching(Robot, Camera, path, SIM, DEBUG):
     ###############################
     ### Step 6: Hole searching
     ###############################
     BASE = path['holeSearching'] if DEBUG else path['ROOT']
+    AF_BASE = path['AFocus'] if DEBUG else path['ROOT']
     Init_Hole_GOAL = BASE + 'goal/init_hole.yaml'
-
+    BFocus_GOAL = AF_BASE + 'goal/bf_goal.yaml'
+    
+    with open(BFocus_GOAL) as f:
+        bf_goal = yaml.load(f)
     if SIM:
-        goal = (0.0989688762978, -0.290417812266, 0.409766763058, 0.977195181237, 0.0266658008638, 0.210581453508, 0.00582788734334)
+        goal = (0.0989688762978, -0.290417812266, 0.409766763058, -0.977195181237, -0.0266658008638, 0.210581453508, 0.00582788734334)
     else:
-        goal = (0.139019192749, 0.314629730736, 0.3611393565832349, 0.140137191122, -0.99013156264, -0.000542796445765, 0.000872754540243)
+        z = bf_goal[2]
+        goal = (0.144525136068, 0.265912577031, z, 0.398085345338, -0.917348381037, 3.9178121329e-05, 6.4035997246e-05)
         
     with open(Init_Hole_GOAL, 'w') as f:
         yaml.dump(list(goal), f, default_flow_style=False)
@@ -136,6 +144,7 @@ def HoleSearching(Robot, Camera, path, DEBUG):
     cmd = 'python ' + path['holeSearching'] + 'holeSearching.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
     print("============ End HoleSearching process ============")
+
 def main(SIM, DEBUG=True):
     # PATH SETTING
     CONFIG = 'config.yaml'
@@ -148,12 +157,12 @@ def main(SIM, DEBUG=True):
     Robot = hardward_controller.MoveGroupInteface()
     Camera = hardward_controller.camera_shooter()
     try:
-        AutoCenter(Robot, Camera, path, SIM, DEBUG)
-        AutoFocus(Robot, Camera, path, SIM, DEBUG) 
-        AutoPose(Robot, Camera, path, SIM, DEBUG)
-        CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG)
-        SolveXZ(Robot, Camera, path, DEBUG)
-        HoleSearching(Robot, Camera, path, DEBUG)
+        # AutoCenter(Robot, Camera, path, SIM, DEBUG)
+        # AutoFocus(Robot, Camera, path, SIM, DEBUG) 
+        # AutoPose(Robot, Camera, path, SIM, DEBUG)
+        # CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG)
+        # SolveXZ(Robot, Camera, path, DEBUG)
+        HoleSearching(Robot, Camera, path, SIM, DEBUG)
 
         print("============ Calibration process complete!")
     
@@ -164,6 +173,7 @@ def main(SIM, DEBUG=True):
 
 if __name__ == '__main__':
     SIM = False
+    # SIM = True
     main(SIM)
   
 

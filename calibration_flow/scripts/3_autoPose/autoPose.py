@@ -148,18 +148,25 @@ def main_gazebo(DEBUG):
     with open(BF_GOAL) as f:
         bf_goal = np.array(yaml.load(f))
 
-    cam_pose = [0, 0, 0.050, 0, 0, -90] # pose wrt Flange in meter: (x,y,z,Rx,Ry,Rz)
+    cam_pose = [-0.040, 0, 0.040, 0, 0, -90] # pose wrt Flange in meter: (x,y,z,Rx,Ry,Rz)
     WD = bf_goal[2] - cam_pose[2] # work distence from camera to pattern(m)
-    pose_amount = 12 # Amount of camera pose
-    phi = 10 # polarangle 
+    pose_amount = 24 # Amount of camera pose
+    camOrientations = np.zeros((pose_amount, 6))
+
+    # First layer of poses
+    phi = 20 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
-
-    camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
+    camOrientation1 = main_calculateCameraPose(WD, pose_amount/2, phi, 
                                     theta_interval, CAMERA_POSE_PATH)                    
-    with open(CAMERA_POSE_PATH, 'w') as f:
-        yaml.dump(camOrientations.tolist(), f, default_flow_style=False)
-        print('Save the camera pose data to yaml data file.')
 
+    # Second layer of poses
+    phi = 15 # polarangle 
+    theta_interval = 30 # interval of azimuthal angle
+    camOrientation2 = main_calculateCameraPose(WD, pose_amount/2, phi, 
+                                    theta_interval, CAMERA_POSE_PATH) 
+
+    camOrientations[:pose_amount/2, :] = camOrientation1
+    camOrientations[pose_amount/2:, :] = camOrientation2
     # data visualization
     World = frame3D.Frame(np.matlib.identity(4))
     Pattern = frame3D.Frame(World.pose)
@@ -260,16 +267,23 @@ def main_denso(DEBUG):
 
     cam_pose = [-0.040, 0, 0.040, 0, 0, -90] # pose wrt Flange in meter: (x,y,z,Rx,Ry,Rz)
     WD = bf_goal[2] - cam_pose[2] # work distence from camera to pattern(m)
-    pose_amount = 12 # Amount of camera pose
+    pose_amount = 24 # Amount of camera pose
+    camOrientations = np.zeros((pose_amount, 6))
+    
+    # First layer of poses
+    phi = 20 # polarangle 
+    theta_interval = 30 # interval of azimuthal angle
+    camOrientation1 = main_calculateCameraPose(WD, pose_amount/2, phi, 
+                                    theta_interval, CAMERA_POSE_PATH)                    
+
+    # Second layer of poses
     phi = 15 # polarangle 
     theta_interval = 30 # interval of azimuthal angle
-
-    camOrientations = main_calculateCameraPose(WD, pose_amount, phi, 
+    camOrientation2 = main_calculateCameraPose(WD, pose_amount/2, phi, 
                                     theta_interval, CAMERA_POSE_PATH)                    
-    with open(CAMERA_POSE_PATH, 'w') as f:
-        yaml.dump(camOrientations.tolist(), f, default_flow_style=False)
-        print('Save the camera pose data to yaml data file.')
-    
+
+    camOrientations[:pose_amount/2, :] = camOrientation1
+    camOrientations[pose_amount/2:, :] = camOrientation2
     # data visualization
     World = frame3D.Frame(np.matlib.identity(4))
     Pattern = frame3D.Frame(World.pose)

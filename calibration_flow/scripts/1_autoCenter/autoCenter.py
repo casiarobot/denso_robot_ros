@@ -64,7 +64,7 @@ def get_cam_parameter(camBrand, FOV):
                           [0, 0, v0],
                           [0, 0, 1]]) 
         # Magnification unit pixel to mm
-        Mpx2mm = np.array([20.0/210.0, 20.0/210.0])*np.array([-1, 1])
+        Mpx2mm = np.array([20.0/210.0, 20.0/210.0])*np.array([1, 1])
     else:
         raise('Not supported camera')
 
@@ -85,7 +85,70 @@ def convert_center_ROSgoal(dq, Init_GOAL):
     H[2, 3] = init_goal[2]
     H[0:2, 0:2] =  np.matrix([[cos(dq[2]), -sin(dq[2])], [sin(dq[2]), cos(dq[2])]])
     q = q0*quaternion.from_rotation_matrix(H[0:3, 0:3])
-    goal = np.array([H[0,3], H[1,3], H[2,3], q.x, q.y, q.z, q.w])
+    Hq = quaternion.as_rotation_matrix(q)
+    x = H[0, 3]
+    y = H[1, 3]
+    z = H[2, 3]
+    goal = np.array([x, y, z, q.x, q.y, q.z, q.w])
+    return goal
+
+def convert_center_ROSgoal2(dq, Init_GOAL):
+    '''
+    ROS goal: goal = (x, y, z, qx, qy, qz, qw)
+    '''
+    with open(Init_GOAL) as f:
+        init_goal = np.array(yaml.load(f), dtype='float')
+
+    q0 = np.quaternion(init_goal[6], init_goal[3], init_goal[4], init_goal[5])
+    x = np.matrix([[1.0,0.0,-0.035],[0.0,1.0,0.0],[0.0,0.0,1.0]])
+    # x = np.matrix([[1.0,0.0,-0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]])
+    y0 = np.matrix([[cos(dq[2]), -sin(dq[2]), dq[0]], [sin(dq[2]), cos(dq[2]), dq[1]], [0.0, 0.0, 1.0]])
+    y = x*y0*np.linalg.inv(x)
+    H = np.matlib.identity(4)
+    H[0:2, 0:2] = y[0:2, 0:2]
+    H[0:2, 3] = y[0:2, 2]
+
+    H0 = np.matlib.identity(4)
+    H0[0, 3] = init_goal[0]
+    H0[1, 3] = init_goal[1]
+    H0[2, 3] = init_goal[2]
+    H0[0:3, 0:3] =  quaternion.as_rotation_matrix(q0)
+    q = q0*quaternion.from_rotation_matrix(H[0:3, 0:3])
+    H1 = H0*H
+    goal = np.array([H1[0, 3], H1[1, 3], H1[2, 3], q.x, q.y, q.z, q.w])
+    return goal
+
+def convert_center_ROSgoal3(dq, Init_GOAL):
+    '''
+    ROS goal: goal = (x, y, z, qx, qy, qz, qw)
+    '''
+    with open(Init_GOAL) as f:
+        init_goal = np.array(yaml.load(f), dtype='float')
+
+    q0 = np.quaternion(init_goal[6], init_goal[3], init_goal[4], init_goal[5])
+
+    # H0 = H camera
+    H0 = np.matlib.identity(4)
+    H0[0, 3] = init_goal[0] + 0.035
+    H0[1, 3] = init_goal[1]
+    H0[2, 3] = init_goal[2]
+    H0[0:3, 0:3] =  quaternion.as_rotation_matrix(q0)
+    print(H0[0,3], H0[1,3])
+    # Center of Pattern  
+    Px = H0[0, 3] + dq[0]
+    Py = H0[1, 3] + dq[1]
+
+    print(Px,Py)
+
+    # Flange
+    Fx = Px - 0.035*cos(-dq[2])
+    Fy = Py - 0.035*sin(-dq[2])
+    print(Fx,Fy)
+
+    H =  np.array([[cos(dq[2]), -sin(dq[2]), 0.0], [sin(dq[2]), cos(dq[2]), 0.0], [0.0, 0.0, 1.0]])
+    q = q0*quaternion.from_rotation_matrix(H)
+
+    goal = np.array([Fx, Fy, init_goal[2], q.x, q.y, q.z, q.w])
     return goal
 
 def compute_compensation(BASE, IMAGE_PATH, Mpx2mm):
@@ -110,11 +173,13 @@ def compute_compensation(BASE, IMAGE_PATH, Mpx2mm):
     # Compensate of pixel and mm
     x_uvec, y_uvec, ptCen, angle = cal_center_axis_vector(ARcors, ARids)
     dU = np.array(gray.shape)[::-1]/2 - ptCen
+    # Mpx2mm = np.array([0.07331378, 0.07473842])
+    # angle = np.radians(-30)
     dQ = Mpx2mm*dU[::-1]
-
     # convert unit to meter
     dq = np.array([dQ[0]/1000, dQ[1]/1000, angle]) # dx, dy, angle
-    
+    print(ptCen)
+    print(dq)
     return dq
 
 def main_gazebo(DEBUG):
@@ -137,7 +202,7 @@ def main_gazebo(DEBUG):
     dq = compute_compensation(BASE, IMAGE_PATH, Mpx2mm)
 
     # Convert compensation to ROS goal
-    ac_goal = convert_center_ROSgoal(dq, Init_GOAL)
+    ac_goal = convert_center_ROSgoal3(dq, Init_GOAL)
     
     # Set auto focus goal moved along z-axis of center goal
     n = 11 # number of goal
@@ -175,7 +240,7 @@ def main_denso(DEBUG):
     dq = compute_compensation(BASE, IMAGE_PATH, Mpx2mm)
 
     # Convert compensation to ROS goal
-    ac_goal = convert_center_ROSgoal(dq, Init_GOAL)
+    ac_goal = convert_center_ROSgoal3(dq, Init_GOAL)
     
     # Set auto focus goal moved along z-axis of center goal
     n = 11 # number of goal
@@ -211,5 +276,5 @@ if __name__ == '__main__':
     else:
         SIM = True
         DEBUG = True
-
+    SIM = False
     main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)

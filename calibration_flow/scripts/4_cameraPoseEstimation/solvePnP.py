@@ -75,6 +75,10 @@ def main(DEBUG, output_pattern_img=True):
     distCoeffs = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
     rvecs = []
     tvecs = []
+    allCHCors = []
+    allCHIds = []
+    # CHimgpoints = [] # 2d points in image plane.
+    # ARimgpoints = [] # 2d points in image plane.
 
     images = sorted(glob.glob(IMAGE_PATH))
     for ind, fname in enumerate(images):
@@ -89,13 +93,32 @@ def main(DEBUG, output_pattern_img=True):
             if retval and CHcors is not None and CHids is not None and len(CHcors)>3:
                 rvecs.append(rvec)
                 tvecs.append(tvec)
-
+                allCHCors.append(CHcors)
+                allCHIds.append(CHids)
+                
             cv2.aruco.drawDetectedMarkers(frame, ARcors, ARids)
 
         cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('frame', 1200, 800)
         cv2.imshow('frame', frame)
         cv2.waitKey(10)
+
+    tot_error = 0
+    tot_points = 0
+    for i in range(len(allCHCors)):
+        imgpoints2, _ = cv2.projectPoints(board.chessboardCorners, rvecs[i], tvecs[i], cameraMatrix, distCoeffs)
+        # tot_error += cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+        tot_error += np.sum(np.abs(allCHCors[i] - imgpoints2)**2)
+        tot_points += len(allCHCors[i]) 
+        plt.scatter(allCHCors[i][:, 0, 0], allCHCors[i][:, 0, 1], color='red')
+        plt.scatter(imgpoints2[:, 0, 0], imgpoints2[:, 0, 1], color='blue')
+        # plt.show()
+        # plt.show(block=False)
+        # plt.pause(0.5)
+        # plt.close()
+
+    mean_error = np.sqrt(tot_error/tot_points)
+    print("Mean reprojection error: {0}".format(mean_error))
 
     cv2.destroyAllWindows()
     imsize = gray.shape

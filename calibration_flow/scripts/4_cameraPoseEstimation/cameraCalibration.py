@@ -53,20 +53,25 @@ def main(DEBUG, output_pattern_img=True):
     with open(CONFIG) as f:
         path = yaml.load(f)
     
-    BASE = path['PoseEstimation'] if DEBUG else path['ROOT']
+    BASE = path['PoseEstimation'] if DEBUG else path['ROOT']    
+    AC_BASE = path['ACenter'] if DEBUG else path['ROOT']
     AP_BASE = path['APose'] if DEBUG else path['ROOT']
     IMAGE_PATH = AP_BASE + 'img/ap*.bmp'
+    INTMAT_GUESS = AC_BASE + 'goal/camera_mat.yaml'
     INTMAT = BASE + 'goal/camera_mat.yaml'
     EXTMAT = BASE + 'goal/As.yaml'
 
     dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_100)
-    board = cv2.aruco.CharucoBoard_create(11, 9, 0.020, 0.010, dictionary)
+    board = cv2.aruco.CharucoBoard_create(11, 9, 0.010, 0.005, dictionary)
 
     #Dump the calibration board to a file
     if output_pattern_img:
-        img = board.draw((200*11,200*9))
-        cv2.imwrite(BASE +'charuco.png',img)
+        img = board.draw((100*11,100*9))
+        cv2.imwrite(BASE +'img/charuco.png',img)
 
+    with open(INTMAT_GUESS) as f:
+        cameraMatrix_guess = np.array(yaml.load(f))
+    distCoeffs = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
     allCHCors = []
     allCHIds = []
 
@@ -89,10 +94,24 @@ def main(DEBUG, output_pattern_img=True):
         cv2.imshow('frame', frame)
         cv2.waitKey(10)
 
+
+
     cv2.destroyAllWindows()
     imsize = gray.shape
     retval, cameraMatrix, distCoeffs, rvecs, tvecs = cv2.aruco.calibrateCameraCharuco(allCHCors, allCHIds, board, imsize, None, None)
-    print(retval)
+
+    tot_error = 0
+    tot_points = 0
+    for i in range(len(allCHCors)):
+        imgpoints2, _ = cv2.projectPoints(board.chessboardCorners, rvecs[i], tvecs[i], cameraMatrix, distCoeffs)
+        # tot_error += cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+        tot_error += np.sum(np.abs(allCHCors[i] - imgpoints2)**2)
+        tot_points += len(allCHCors[i]) 
+
+    mean_error = np.sqrt(tot_error/tot_points)
+    print("Mean reprojection error: {0}".format(mean_error))
+    print("Final reprojection error opencv: {0}".format(retval))
+
     # ext_mat: Extrinsic matrix from Pattern to Camera
     As = as_homogeneous_mat(rvecs, tvecs)
 
@@ -109,11 +128,11 @@ def main(DEBUG, output_pattern_img=True):
     B_PATH = AP_BASE + 'goal/Bs.yaml'
     Z_PATH = AP_BASE + 'goal/Z.yaml'
     with open(X_PATH) as f:
-        X = np.matrix(yaml.load(f))
+        X = np.array(yaml.load(f))
     with open(B_PATH) as f:
-        Bs = np.matrix(yaml.load(f))
+        Bs = np.array(yaml.load(f))
     with open(Z_PATH) as f:
-        Z = np.matrix(yaml.load(f))
+        Z = np.array(yaml.load(f))
 
     World = frame3D.Frame(np.matlib.identity(4))
     Pattern = frame3D.Frame(World.pose)

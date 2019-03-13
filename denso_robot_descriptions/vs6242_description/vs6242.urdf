@@ -280,7 +280,7 @@
 
 	<joint name="camera_joint" type="fixed">
 		<axis xyz="1 0 0" />
-		<origin xyz="0 0 0.05" rpy="0 -1.5707963 0"/>
+		<origin xyz="-0.035 0 0.05" rpy="0 -1.5707963 0"/>
 		<!-- <origin xyz="0 0 0.05" rpy="-1.5707963 0 -1.5707963"/> -->
 		<parent link="J6"/>
 		<child link="camera_link"/>
@@ -374,7 +374,8 @@
 	<joint name="joint_pattern" type="fixed">
 		<parent link="world" />
 		<child link="pattern" />
-		<origin rpy="0.000000 0.000000 1.5707963" xyz="0.300000 0.000000 0.001" />
+		<origin rpy="0.00000 0.000000 -1.047197551" xyz="0.310000 0.050000 0.001" />
+		<!-- <origin rpy="0.000000 0.000000 1.5707963" xyz="0.300000 0.000000 0.001" /> -->
 	</joint>
 
 	<!-- Add emissive light in pattern self -->

@@ -33,6 +33,27 @@ def cal_contrast(gray_img, focus_regin_size):
             g_sum[x, y] = cal_G(img, x, y)**2
     return np.sum(g_sum)/(J*K)
 
+def CMSL(gray_img):
+        """
+        Contrast Measure based on squared Laplacian according to
+        'Robust Automatic Focus Algorithm for Low Contrast Images
+        Using a New Contrast Measure'
+        by Xu et Al. doi:10.3390/s110908281
+        """
+        ky1 = np.array(([0.0, -1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]))
+        ky2 = np.array(([0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, -1.0, 0.0]))
+        kx1 = np.array(([0.0, 0.0, 0.0], [-1.0, 1.0, 0.0], [0.0, 0.0, 0.0]))
+        kx2 = np.array(([0.0, 0.0, 0.0], [0.0, 1.0, -1.0], [0.0, 0.0, 0.0]))
+        g_img = abs(cv2.filter2D(gray_img, cv2.CV_32F, kx1)) + \
+                abs(cv2.filter2D(gray_img, cv2.CV_32F, ky1)) + \
+                abs(cv2.filter2D(gray_img, cv2.CV_32F, kx2)) + \
+                abs(cv2.filter2D(gray_img, cv2.CV_32F, ky2))
+        return cv2.boxFilter(
+                                g_img * g_img,
+                                -1,
+                                (3, 3),
+                                normalize=True)
+
 def img_preprocess(img_origin):
         gray = cv2.cvtColor(img_origin, cv2.COLOR_BGR2GRAY)
         blur = cv2.bilateralFilter(gray, 9, 75, 75)
@@ -49,12 +70,13 @@ def draw_img(img, frame_name, winWidth, winheight=None, keep_aspect=True, ROI_si
         winheight = int(winWidth*ratio)
 
     if draw_roi and ROI_size is not None:
+        ROI = (ROI_size, ROI_size)
         draw_ROI(img, ROI_size)
 
     cv2.namedWindow(frame_name, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(frame_name, winWidth, winheight)
     cv2.imshow(frame_name, img)
-    cv2.waitKey(1000)
+    cv2.waitKey(300)
 
 def gaus(x, a, mean, sigma):
     return a*np.exp(-(x-mean)**2 / (2*sigma**2))
@@ -93,7 +115,7 @@ def main_gazebo(DEBUG):
 
     # Save best focal work distance
     n = len(af_goals)
-    bestFocus_goals = af_goals[0, :]
+    bestFocus_goals = af_goals[n//2, :]
     with open(BF_GOAL, 'w') as f:
         yaml.dump(bestFocus_goals.tolist(), f, default_flow_style=False)
 
@@ -109,17 +131,17 @@ def main_denso(DEBUG):
     BF_GOAL = BASE + 'goal/bf_goal.yaml'
 
     images = sorted(glob.glob(IMAGE_PATH))
-    ROI = (600, 600) # heigh, width
+    ROIsize = 1500 # Square ROI
     windowWidth = 800
     ls_contrast = []
     for fname in images:
         img0 = cv2.imread(fname)
         img = img_preprocess(img0)
-        contrast = cal_contrast(img, ROI)
+        contrast = CMSL(img).mean()
         ls_contrast.append(contrast)
         print(fname)
         print(contrast)
-        draw_img(img, 'image', windowWidth, ROI_size=ROI)
+        draw_img(img, 'image', windowWidth, ROI_size=ROIsize)
         
     # Guas curve fitting and find peak locaion
 
@@ -142,7 +164,10 @@ def main_denso(DEBUG):
     plt.title('Auto focus')
     plt.xlabel('Len position')
     plt.ylabel('Contrast')
-    plt.show()
+    # plt.show()
+    plt.show(block=False)
+    plt.pause(0.5)
+    plt.close()
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
@@ -158,5 +183,5 @@ if __name__ == '__main__':
     else:
         SIM = True
         DEBUG = True
-
+    SIM = False
     main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)

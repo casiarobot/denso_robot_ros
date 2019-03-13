@@ -135,6 +135,7 @@ def main(DEBUG):
     Camera.plot_frame(ax, 'Camera') 
     Flange.plot_frame(ax, 'Flange') 
     Workpiece.plot_frame(ax, 'Workpiece')
+    print(W)
     plt.show()
 
 
