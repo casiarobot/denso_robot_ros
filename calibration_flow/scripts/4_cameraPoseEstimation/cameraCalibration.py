@@ -89,10 +89,10 @@ def main(DEBUG, output_pattern_img=True):
 
             cv2.aruco.drawDetectedMarkers(frame, ARcors, ARids)
 
-        cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('frame', 1200, 800)
-        cv2.imshow('frame', frame)
-        cv2.waitKey(10)
+        # cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
+        # cv2.resizeWindow('frame', 1200, 800)
+        # cv2.imshow('frame', frame)
+        # cv2.waitKey(10)
 
 
 
@@ -148,14 +148,24 @@ def main(DEBUG, output_pattern_img=True):
     # Determine Z
     ##################    
     Base.plot_frame(ax, 'Base')
+    cmd_Z1 = orientation.asRad((0.045, 0.055, 0, 0, 0, 0)).cmd()
+    cmd_Z2 = orientation.asRad((0.31, 0.05, 0.001, 0.0, 0.0, -60)).cmd()
+    cmd_iZ1 = orientation.asRad((-0.045, -0.055, 0, 0, 0, 0)).cmd()
+
+    Pattern.transform(cmd_Z2, refFrame=Base.pose)
+    Image.transform(cmd_iZ1, refFrame=Pattern.pose)
+
     for i, (A, B) in enumerate(zip(As, Bs)):
         Flange.transform_by_rotation_mat(B, refFrame=Base.pose)
         Camera.transform_by_rotation_mat(X, refFrame=Flange.pose)
-        Image.transform_by_rotation_mat(A, refFrame=Camera.pose)
-        
-        Flange.plot_frame(ax, '')
-        Camera.plot_frame(ax, '')
-        Image.plot_frame(ax, 'Image')
+        # Image.transform_by_rotation_mat(A, refFrame=Camera.pose)
+        # Pattern.transform(cmd_Z1, refFrame=Image.pose)
+
+        if i < 1:
+            # Flange.plot_frame(ax, '')
+            # Camera.plot_frame(ax, '')
+            Image.plot_frame(ax, 'Image')
+            Pattern.plot_frame(ax, 'Pattern')
 
     plt.show()
     # plt.show(block=False)

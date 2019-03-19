@@ -61,11 +61,12 @@ def __solveXZ__(As, Bs):
         
         return fval.flatten()
 
-    x0 = np.random.rand(12)
+    # x0 = np.random.rand(12)
+    x0 = np.array([-8.98312741e-01, -5.66731629e-03,  4.64156886e+00,  2.73101774e+00,     -9.45400758e-03,  6.80454534e+00, -3.95480793e-02, -2.62769118e-03,     4.00426225e-02,  2.41447274e-01,  5.84820302e-02,  2.08623381e-03])
     lb = (-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -10, -10, -5, -10, -10, -5)
     ub = (2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 10, 10, 10, 10, 10, 10)
     res = least_squares(objRot, x0, args=(As, Bs), method='lm',
-                         verbose=2, ftol=1e-15, xtol=1e-15)
+                         verbose=2, ftol=1e-32, xtol=1e-32)
     
     # Check
     HX = np.matlib.identity(4)
@@ -142,6 +143,7 @@ def main(DEBUG):
     with open(HZ_PATH, 'w') as f:
         yaml.dump(HZ.tolist(), f, default_flow_style=False)
         print('Save the solved Z matrix to yaml data file.')
+
 
 
 if __name__ == "__main__":

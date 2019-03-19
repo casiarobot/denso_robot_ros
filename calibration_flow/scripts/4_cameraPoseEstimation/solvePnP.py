@@ -110,8 +110,8 @@ def main(DEBUG, output_pattern_img=True):
         # tot_error += cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
         tot_error += np.sum(np.abs(allCHCors[i] - imgpoints2)**2)
         tot_points += len(allCHCors[i]) 
-        plt.scatter(allCHCors[i][:, 0, 0], allCHCors[i][:, 0, 1], color='red')
-        plt.scatter(imgpoints2[:, 0, 0], imgpoints2[:, 0, 1], color='blue')
+        # plt.scatter(allCHCors[i][:, 0, 0], allCHCors[i][:, 0, 1], color='red')
+        # plt.scatter(imgpoints2[:, 0, 0], imgpoints2[:, 0, 1], color='blue')
         # plt.show()
         # plt.show(block=False)
         # plt.pause(0.5)
@@ -133,6 +133,47 @@ def main(DEBUG, output_pattern_img=True):
         yaml.dump(cameraMatrix.tolist(), f, default_flow_style=False)
         print('Save the Intrinsic matrix to yaml data file.')
 
+    # Data visualization
+    X_PATH = AP_BASE + 'goal/X.yaml'
+    B_PATH = AP_BASE + 'goal/Bs.yaml'
+    Z_PATH = AP_BASE + 'goal/Z.yaml'
+    with open(X_PATH) as f:
+        X = np.array(yaml.load(f))
+    with open(B_PATH) as f:
+        Bs = np.array(yaml.load(f))
+    with open(Z_PATH) as f:
+        Z = np.array(yaml.load(f))
+
+    World = frame3D.Frame(np.matlib.identity(4))
+    Pattern = frame3D.Frame(World.pose)
+    Image = frame3D.Frame(Pattern.pose)
+    Camera = frame3D.Frame(Pattern.pose)
+    Flange = frame3D.Frame(Pattern.pose)
+    Base = frame3D.Frame(Pattern.pose)
+    Flange_test = frame3D.Frame(Pattern.pose)
+    orientation = frame3D.Orientation()
+    ax = frame3D.make_3D_fig(axSize=0.45)
+
+    ##################
+    # Determine Z
+    ##################    
+    Base.plot_frame(ax, 'Base')
+    cmd_Z1 = orientation.asRad((0.045, 0.055, 0, 0, 0, 0)).cmd()
+
+    for i, (A, B) in enumerate(zip(As, Bs)):
+        Flange.transform_by_rotation_mat(B, refFrame=Base.pose)
+        Camera.transform_by_rotation_mat(X, refFrame=Flange.pose)
+        Image.transform_by_rotation_mat(A, refFrame=Camera.pose)
+        Pattern.transform(cmd_Z1, refFrame=Image.pose)
+        
+        if i < 12:
+            # Flange.plot_frame(ax, '')
+            Camera.plot_frame(ax, '')
+            Image.plot_frame(ax, 'Image')
+            Pattern.plot_frame(ax, 'Pattern')
+
+    # plt.show()
+    
 if __name__ == "__main__":
     import sys
     if len(sys.argv) >= 2:

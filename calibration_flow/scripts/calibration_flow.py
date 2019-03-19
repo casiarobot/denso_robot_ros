@@ -20,7 +20,7 @@ def AutoCenter(Robot, Camera, path, SIM, DEBUG):
     if SIM:
         # goal = (0.3, -0.03, 0.4, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
         # goal = (0.26, 0.0, 0.399978956713, 0.00106130271845, 0.999999396927, 0.000280212483897, 3.55297433221e-05)
-        goal = (0.3, 0.0, 0.4, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
+        goal = (0.3, 0.03, 0.25, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
     else:
         goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
 
@@ -157,11 +157,11 @@ def main(SIM, DEBUG=True):
     Robot = hardward_controller.MoveGroupInteface()
     Camera = hardward_controller.camera_shooter()
     try:
-        # AutoCenter(Robot, Camera, path, SIM, DEBUG)
-        # AutoFocus(Robot, Camera, path, SIM, DEBUG) 
-        # AutoPose(Robot, Camera, path, SIM, DEBUG)
-        # CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG)
-        # SolveXZ(Robot, Camera, path, DEBUG)
+        AutoCenter(Robot, Camera, path, SIM, DEBUG)
+        AutoFocus(Robot, Camera, path, SIM, DEBUG) 
+        AutoPose(Robot, Camera, path, SIM, DEBUG)
+        CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG)
+        SolveXZ(Robot, Camera, path, DEBUG)
         HoleSearching(Robot, Camera, path, SIM, DEBUG)
 
         print("============ Calibration process complete!")
@@ -172,8 +172,8 @@ def main(SIM, DEBUG=True):
         return
 
 if __name__ == '__main__':
-    SIM = False
-    # SIM = True
+    # SIM = False
+    SIM = True
     main(SIM)
   
 

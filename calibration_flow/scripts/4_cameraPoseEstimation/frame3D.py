@@ -41,7 +41,7 @@ class Orientation():
 
     def asRad(self, orientation):
         '''
-        Convert Rx, Ry, Rz from degree tp radians.
+        Convert Rx, Ry, Rz from degree to radians.
         '''
         (x, y, z, Rx, Ry, Rz) = orientation
         Rx, Ry, Rz = np.radians([Rx, Ry, Rz])
@@ -218,7 +218,7 @@ class Frame():
         self.ax.set_zlabel('z_values')
         self.ax.text(x0, y0, z0, s=self.frameName, zdir=None)
 
-    def plot_frame(self, plotAx, frameName, axisLen=0.100):
+    def plot_frame(self, plotAx, frameName, axisLen=0.300):
         self.ax = plotAx
         self.frameName = frameName
         

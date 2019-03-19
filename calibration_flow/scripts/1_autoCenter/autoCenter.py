@@ -64,7 +64,7 @@ def get_cam_parameter(camBrand, FOV):
                           [0, 0, v0],
                           [0, 0, 1]]) 
         # Magnification unit pixel to mm
-        Mpx2mm = np.array([20.0/210.0, 20.0/210.0])*np.array([1, 1])
+        Mpx2mm = np.array([110.0/1963.0, 80.0/1427])*np.array([1, 1])
     else:
         raise('Not supported camera')
 
@@ -129,7 +129,7 @@ def convert_center_ROSgoal3(dq, Init_GOAL):
 
     # H0 = H camera
     H0 = np.matlib.identity(4)
-    H0[0, 3] = init_goal[0] + 0.035
+    H0[0, 3] = init_goal[0] + 0.040
     H0[1, 3] = init_goal[1]
     H0[2, 3] = init_goal[2]
     H0[0:3, 0:3] =  quaternion.as_rotation_matrix(q0)
@@ -141,8 +141,8 @@ def convert_center_ROSgoal3(dq, Init_GOAL):
     print(Px,Py)
 
     # Flange
-    Fx = Px - 0.035*cos(-dq[2])
-    Fy = Py - 0.035*sin(-dq[2])
+    Fx = Px - 0.040*cos(-dq[2])
+    Fy = Py - 0.040*sin(-dq[2])
     print(Fx,Fy)
 
     H =  np.array([[cos(dq[2]), -sin(dq[2]), 0.0], [sin(dq[2]), cos(dq[2]), 0.0], [0.0, 0.0, 1.0]])
@@ -172,9 +172,7 @@ def compute_compensation(BASE, IMAGE_PATH, Mpx2mm):
 
     # Compensate of pixel and mm
     x_uvec, y_uvec, ptCen, angle = cal_center_axis_vector(ARcors, ARids)
-    dU = np.array(gray.shape)[::-1]/2 - ptCen
-    # Mpx2mm = np.array([0.07331378, 0.07473842])
-    # angle = np.radians(-30)
+    dU = np.array(gray.shape)[::-1]/2 - ptCen    
     dQ = Mpx2mm*dU[::-1]
     # convert unit to meter
     dq = np.array([dQ[0]/1000, dQ[1]/1000, angle]) # dx, dy, angle
@@ -276,5 +274,5 @@ if __name__ == '__main__':
     else:
         SIM = True
         DEBUG = True
-    SIM = False
+    
     main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)

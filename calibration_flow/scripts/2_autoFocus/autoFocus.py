@@ -183,5 +183,4 @@ if __name__ == '__main__':
     else:
         SIM = True
         DEBUG = True
-    SIM = False
     main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)
