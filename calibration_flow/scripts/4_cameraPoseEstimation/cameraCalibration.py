@@ -88,11 +88,11 @@ def main(DEBUG, output_pattern_img=True):
                 allCHIds.append(CHids)
 
             cv2.aruco.drawDetectedMarkers(frame, ARcors, ARids)
-
-        # cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow('frame', 1200, 800)
-        # cv2.imshow('frame', frame)
-        # cv2.waitKey(10)
+        
+        cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('frame', 1200, 800)
+        cv2.imshow('frame', frame)
+        cv2.waitKey(300)
 
 
 
@@ -102,15 +102,22 @@ def main(DEBUG, output_pattern_img=True):
 
     tot_error = 0
     tot_points = 0
-    for i in range(len(allCHCors)):
-        imgpoints2, _ = cv2.projectPoints(board.chessboardCorners, rvecs[i], tvecs[i], cameraMatrix, distCoeffs)
-        # tot_error += cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+    for i, iCHIds in enumerate(allCHIds):
+        objpoints = board.chessboardCorners[iCHIds.flatten(), :]
+        imgpoints2, _ = cv2.projectPoints(objpoints, rvecs[i], tvecs[i], cameraMatrix, distCoeffs)
+        # tot_error += cv2.norm(allCHCors[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
         tot_error += np.sum(np.abs(allCHCors[i] - imgpoints2)**2)
         tot_points += len(allCHCors[i]) 
-
+        if i < 6:
+            plt.scatter(allCHCors[i][:, 0, 0], allCHCors[i][:, 0, 1], color='red')
+            plt.scatter(imgpoints2[:, 0, 0], imgpoints2[:, 0, 1], color='blue')
+            # plt.show()
+            plt.show(block=False)
+            plt.pause(0.5)
+            plt.close()
     mean_error = np.sqrt(tot_error/tot_points)
     print("Mean reprojection error: {0}".format(mean_error))
-    print("Final reprojection error opencv: {0}".format(retval))
+    # print("Final reprojection error opencv: {0}".format(retval))
 
     # ext_mat: Extrinsic matrix from Pattern to Camera
     As = as_homogeneous_mat(rvecs, tvecs)
@@ -148,12 +155,15 @@ def main(DEBUG, output_pattern_img=True):
     # Determine Z
     ##################    
     Base.plot_frame(ax, 'Base')
-    cmd_Z1 = orientation.asRad((0.045, 0.055, 0, 0, 0, 0)).cmd()
-    cmd_Z2 = orientation.asRad((0.31, 0.05, 0.001, 0.0, 0.0, -60)).cmd()
-    cmd_iZ1 = orientation.asRad((-0.045, -0.055, 0, 0, 0, 0)).cmd()
-
+    # cmd_Z1 = orientation.asRad((0.045, 0.055, 0, 0, 0, 0)).cmd()
+    # cmd_Z2 = orientation.asRad((0.31, 0.05, 0.001, 0.0, 0.0, -60)).cmd()
+    # cmd_iZ1 = orientation.asRad((-0.045, -0.055, 0, 0, 0, 0)).cmd()
+    # cmd_Z3 = orientation.asRad((0.2398686, 0.06147114, 0.001, 0.0, 0.0, -60)).cmd()
+    cmd_Z2 = orientation.asRad((0.3, 0.0, 0.001, 0.0, 0.0, -90.0)).cmd()
+    cmd_Z3 = orientation.asRad((0.255, 0.055, 0.002, 0.0, 0.0, -90.0)).cmd()
     Pattern.transform(cmd_Z2, refFrame=Base.pose)
-    Image.transform(cmd_iZ1, refFrame=Pattern.pose)
+    # Image.transform(cmd_iZ1, refFrame=Pattern.pose)
+    Image.transform(cmd_Z3, refFrame=Base.pose)
 
     for i, (A, B) in enumerate(zip(As, Bs)):
         Flange.transform_by_rotation_mat(B, refFrame=Base.pose)
@@ -161,13 +171,13 @@ def main(DEBUG, output_pattern_img=True):
         # Image.transform_by_rotation_mat(A, refFrame=Camera.pose)
         # Pattern.transform(cmd_Z1, refFrame=Image.pose)
 
-        if i < 1:
-            # Flange.plot_frame(ax, '')
-            # Camera.plot_frame(ax, '')
-            Image.plot_frame(ax, 'Image')
-            Pattern.plot_frame(ax, 'Pattern')
+        
+        Flange.plot_frame(ax, '')
+        Camera.plot_frame(ax, '')
+        Image.plot_frame(ax, 'Image')
+        Pattern.plot_frame(ax, 'Pattern')
 
-    plt.show()
+    # plt.show()
     # plt.show(block=False)
     # plt.pause(0.5)
     # plt.close()

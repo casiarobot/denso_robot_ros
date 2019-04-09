@@ -37,6 +37,13 @@ def calPositionAndOrientationError(H, H_exact):
         oError = 360.0 - oError 
     return pError, oError
 
+def as_ROSgoal(Homo_mat):
+    '''
+    ROS goal: goal = (x, y, z, qx, qy, qz, qw)
+    '''
+    q = quaternion.from_rotation_matrix(Homo_mat[0:3, 0:3])
+    return np.array([Homo_mat[0, 3], Homo_mat[1, 3], Homo_mat[2, 3], q.x, q.y, q.z, q.w])
+
 def main(DEBUG):
     CONFIG = 'config.yaml'
     with open(CONFIG) as f:
@@ -53,8 +60,12 @@ def main(DEBUG):
     D_MAT = BASE + 'goal/D.yaml'
     HW_MAT = BASE + 'goal/HW.yaml'
     EW_MAT = BASE + 'goal/EW.yaml'
+    HS_GOAL_PATH = BASE + 'goal/hs_goal.yaml'
+    WHole_PATH = BASE + 'goal/Whole.yaml'
+    Bc_PATH = BASE + 'goal/Bc.yaml'
 
-    aruco_dict = cv2.aruco.getPredefinedDictionary( cv2.aruco.DICT_6X6_250 )
+    
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250 )
     squareLength = 0.01   # Here, our measurement unit is m.
     markerLength = 0.25/40.0   # Here, our measurement unit is m.
     arucoParams = cv2.aruco.DetectorParameters_create()
@@ -81,7 +92,7 @@ def main(DEBUG):
         cv2.namedWindow('diamond', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('diamond', 1200, 800)
         cv2.imshow("diamond", img_with_diamond)   # display
-        cv2.waitKey(100)
+        cv2.waitKey()
     cv2.destroyAllWindows()
 
     D = as_homogeneous_mat(rvec, tvec) # from Camera to Object
@@ -104,10 +115,11 @@ def main(DEBUG):
         B0[0:3, 3] = ih[0:3].reshape(3, 1)
 
     W = B0*X*D
+    W[0:3, 0:3] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
     with open(HW_MAT, 'w') as f:
         yaml.dump(W.tolist(), f, default_flow_style=False)
         print('Save the solved W matrix to yaml data file.')
-
+    W = B0*X*D
     World = frame3D.Frame(np.matlib.identity(4))
     Base = frame3D.Frame(World.pose)
     Flange = frame3D.Frame(Base.pose)
@@ -121,23 +133,54 @@ def main(DEBUG):
     Flange.transform_by_rotation_mat(B0, refFrame=Base.pose)
     Camera.transform_by_rotation_mat(X, refFrame=Flange.pose)
     Workpiece.transform_by_rotation_mat(D, refFrame=Camera.pose)
+    Base.plot_frame(ax, 'Base')
+    Camera.plot_frame(ax, 'Camera') 
+    Flange.plot_frame(ax, 'Flange') 
+    Workpiece.plot_frame(ax, 'Workpiece')
     
-    # cmd_W = orientation.asRad((-0.06, -0.3, 0.011, 180, 180, 0)).cmd()
-    # W2 = Workpiece.transform(cmd_W, refFrame=World.pose)
+    cmd_W = orientation.asRad((-0.06, -0.3, 0.011, 0, 0, 90)).cmd()
+    W2 = Workpiece.transform(cmd_W, refFrame=World.pose)
     # with open(EW_MAT, 'w') as f:
     #     yaml.dump(W2.tolist(), f, default_flow_style=False)
     #     print('Save the exact W matrix to yaml data file.')
 
-    # pError, oError = calPositionAndOrientationError(W, W2)
+    pError, oError = calPositionAndOrientationError(W, W2)
     # print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
+
+    plt.show()
+    
+    # Validation
+    # print(W)
+    Whole = W
+    Whole[1, 3] = Whole[1, 3] + 0.015 - 0.0750
+    Whole[0, 3] = Whole[0, 3] - 0.015 + 0.1000
+    WD = 0.32692938211698336
+    cmd_Dc = orientation.asRad((0.0, 0.0, WD, 0.0, 180, 0.0)).cmd()
+    Dc = Workpiece.transform(cmd_Dc, refFrame=World.pose)
+    Bc = Whole*np.linalg.inv(Dc)*np.linalg.inv(X)
+    
+    goal = as_ROSgoal(Bc)
+    with open(HS_GOAL_PATH, 'w') as f:
+        yaml.dump(goal.tolist(), f, default_flow_style=False)
+        print('Save the ROS goal to yaml data file.')
+
+    with open(Bc_PATH, 'w') as f:
+        yaml.dump(Bc.tolist(), f, default_flow_style=False)
+        print('Save the ROS goal to yaml data file.')
+
+    with open(WHole_PATH, 'w') as f:
+        yaml.dump(Whole.tolist(), f, default_flow_style=False)
+        print('Save the ROS goal to yaml data file.')
+
+    Flange.transform_by_rotation_mat(Bc, refFrame=Base.pose)
+    Camera.transform_by_rotation_mat(X, refFrame=Flange.pose)
+    Workpiece.transform_by_rotation_mat(W, refFrame=Base.pose)
 
     Base.plot_frame(ax, 'Base')
     Camera.plot_frame(ax, 'Camera') 
     Flange.plot_frame(ax, 'Flange') 
     Workpiece.plot_frame(ax, 'Workpiece')
-    print(W)
     plt.show()
-
 
 if __name__ == "__main__":
     import sys

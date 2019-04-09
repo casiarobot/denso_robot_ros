@@ -78,30 +78,34 @@ def get_photo_orientation_by_given_shoot_angle(guess_orientation, refFrame, foca
 
     res = scipy.optimize.leastsq(objFun_normal_vector, guess_orientation, 
                         args=(position_1, refFrame), full_output=1)
+
     (Rx, Ry, Rz) = res[0] 
     (a, b, c, _) = position_1
-    orientation_1 = [a, b, c, Rx, Ry, Rz]
-    return orientation_1
+    return [a, b, c, Rx, Ry, Rz]
 
-def main_calculateCameraPose(WD, pose_amount, polar_ang, itvl_azimuthal, CAMERA_POSE_PATH):
+def main_calculateCameraPose(WD, pose_amount, polar_ang, CAMERA_POSE_PATH):
     # ax = frame3D.make_3D_fig(axSize=200)
     World = frame3D.Frame(np.matlib.identity(4))
     Camera = frame3D.Frame(World.pose)
     orientation = frame3D.Orientation()
 
-    thetas = np.linspace(0, 360, pose_amount) # azimuthal angle
+    thetas = np.linspace(0, 360, pose_amount, endpoint=False) # azimuthal angle
     X0 = (np.radians(45), np.radians(45), np.radians(45)) # initial guess
     camOrientations = np.zeros((pose_amount,6)) 
 
-    # World.plot_frame(ax, '')
-    for ind, theta in enumerate(thetas) :
-        orientation_2 = get_photo_orientation_by_given_shoot_angle(X0,\
-                     World.pose, WD, np.radians(polar_ang), np.radians(theta))
-        X0 = orientation_2[3:6]
-        cmd = orientation.asItself(orientation_2).cmd()
-        Camera.transform(cmd, refFrame=World.pose)
-        # Camera.plot_frame(ax, '')
-        camOrientations[ind, :] = Camera.get_orientation_from_pose(Camera.pose, refFrame=World.pose)
+    if polar_ang == 0:
+        for ind, theta in enumerate(thetas) :
+            t = theta + 60
+            camOrientations[ind, :] = (0.0, 0.0, WD, np.pi, 0.0, np.radians(t))
+    else:
+        for ind, theta in enumerate(thetas) :
+            orientation_2 = get_photo_orientation_by_given_shoot_angle(X0,\
+                        World.pose, WD, np.radians(polar_ang), np.radians(theta))
+            X0 = orientation_2[3:6]
+            cmd = orientation.asItself(orientation_2).cmd()
+            Camera.transform(cmd, refFrame=World.pose)
+            camOrientations[ind, :] = Camera.get_orientation_from_pose(Camera.pose, refFrame=World.pose)
+    
     return camOrientations
 
 def as_ROSgoal(Homo_mats):
@@ -150,23 +154,21 @@ def main_gazebo(DEBUG):
 
     cam_pose = [-0.040, 0, 0.040, 0, 0, -90] # pose wrt Flange in meter: (x,y,z,Rx,Ry,Rz)
     WD = bf_goal[2] - cam_pose[2] # work distence from camera to pattern(m)
-    pose_amount = 24 # Amount of camera pose
-    camOrientations = np.zeros((pose_amount, 6))
 
     # First layer of poses
-    phi = 20 # polarangle 
-    theta_interval = 30 # interval of azimuthal angle
-    camOrientation1 = main_calculateCameraPose(WD, pose_amount/2, phi, 
-                                    theta_interval, CAMERA_POSE_PATH)                    
+    phi = 0 # polarangle 
+    camOrien1 = main_calculateCameraPose(WD, 6, phi, CAMERA_POSE_PATH)
 
     # Second layer of poses
     phi = 15 # polarangle 
-    theta_interval = 30 # interval of azimuthal angle
-    camOrientation2 = main_calculateCameraPose(WD, pose_amount/2, phi, 
-                                    theta_interval, CAMERA_POSE_PATH) 
+    camOrien2 = main_calculateCameraPose(WD, 12, phi, CAMERA_POSE_PATH) 
 
-    camOrientations[:pose_amount/2, :] = camOrientation1
-    camOrientations[pose_amount/2:, :] = camOrientation2
+    # Third layer of poses
+    phi = 20 # polarangle 
+    camOrien3 = main_calculateCameraPose(WD, 6, phi, CAMERA_POSE_PATH) 
+
+    camOrientations = np.concatenate((camOrien1, camOrien2, camOrien3), axis=0)
+
     # data visualization
     World = frame3D.Frame(np.matlib.identity(4))
     Pattern = frame3D.Frame(World.pose)
@@ -186,12 +188,12 @@ def main_gazebo(DEBUG):
     # Base to Flange 
     B0 = as_MatrixGoal(bf_goal)
     Flange.transform_by_rotation_mat(B0, refFrame=Base.pose)
-    Flange.plot_frame(ax, 'initFlange')
+    # Flange.plot_frame(ax, 'initFlange')
     # Flange to Camera
     cmd_X = orientation.asRad(cam_pose).cmd()
     X = Camera.transform(cmd_X, refFrame=World.pose)
     Camera.transform(cmd_X, refFrame=Flange.pose)
-    Camera.plot_frame(ax, 'initCamera')
+    # Camera.plot_frame(ax, 'initCamera')
     # Camera to Pattern
    
     cmd_A0 = orientation.asRad((0, 0, WD, 0, 180, 0)).cmd()
@@ -204,6 +206,7 @@ def main_gazebo(DEBUG):
     ##################
     # Pose calculation
     ##################
+    pose_amount = len(camOrientations)
     iAs = np.zeros((pose_amount,4,4))
     Bs = np.zeros((pose_amount,4,4))
     iX = np.linalg.inv(X)
@@ -217,7 +220,7 @@ def main_gazebo(DEBUG):
         # Flange.plot_frame(ax, '')
         # {Test Flange calculate from Z*A*X}
         Bs[i] = Z*iAs[i]*iX
-
+    # plt.show()
     plt.show(block=False)
     plt.pause(0.5)
     plt.close()
@@ -267,23 +270,21 @@ def main_denso(DEBUG):
 
     cam_pose = [-0.040, 0, 0.040, 0, 0, -90] # pose wrt Flange in meter: (x,y,z,Rx,Ry,Rz)
     WD = bf_goal[2] - cam_pose[2] # work distence from camera to pattern(m)
-    pose_amount = 24 # Amount of camera pose
-    camOrientations = np.zeros((pose_amount, 6))
-    
+
     # First layer of poses
-    phi = 20 # polarangle 
-    theta_interval = 30 # interval of azimuthal angle
-    camOrientation1 = main_calculateCameraPose(WD, pose_amount/2, phi, 
-                                    theta_interval, CAMERA_POSE_PATH)                    
+    phi = 0 # polarangle 6
+    camOrien1 = main_calculateCameraPose(WD, 6, phi, CAMERA_POSE_PATH)
 
     # Second layer of poses
-    phi = 15 # polarangle 
-    theta_interval = 30 # interval of azimuthal angle
-    camOrientation2 = main_calculateCameraPose(WD, pose_amount/2, phi, 
-                                    theta_interval, CAMERA_POSE_PATH)                    
+    phi = 10 # polarangle 
+    camOrien2 = main_calculateCameraPose(WD, 12, phi, CAMERA_POSE_PATH) 
 
-    camOrientations[:pose_amount/2, :] = camOrientation1
-    camOrientations[pose_amount/2:, :] = camOrientation2
+    # Third layer of poses
+    phi = 15 # polarangle 
+    camOrien3 = main_calculateCameraPose(WD, 6, phi, CAMERA_POSE_PATH) 
+
+    camOrientations = np.concatenate((camOrien1, camOrien2, camOrien3), axis=0)
+
     # data visualization
     World = frame3D.Frame(np.matlib.identity(4))
     Pattern = frame3D.Frame(World.pose)
@@ -321,7 +322,7 @@ def main_denso(DEBUG):
     ##################
     # Pose calculation
     ##################
-
+    pose_amount = len(camOrientations)
     iAs = np.zeros((pose_amount,4,4))
     Bs = np.zeros((pose_amount,4,4))
     iX = np.linalg.inv(X)
@@ -335,10 +336,10 @@ def main_denso(DEBUG):
         # Flange.plot_frame(ax, '')
         # {Test Flange calculate from Z*A*X}
         Bs[i] = Z*iAs[i]*iX
-
-    plt.show(block=False)
-    plt.pause(0.5)
-    plt.close()
+    plt.show()
+    # plt.show(block=False)
+    # plt.pause(0.5)
+    # plt.close()
 
     with open(Bs_PATH, 'w') as f:
         yaml.dump(Bs.tolist(), f, default_flow_style=False)

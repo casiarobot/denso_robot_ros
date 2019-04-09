@@ -43,29 +43,30 @@ def __create_unit_quaternion__(theta, thetaS, phiS):
     v = __create_unit_vector__(thetaS, phiS)
     return np.quaternion(cos(t), v[0]*sin(t), v[1]*sin(t), v[2]*sin(t))
 
-def __solveXZ__(As, Bs):
-    def objRot(X, As, Bs):
-        HX = np.matlib.identity(4)
-        HZ = np.matlib.identity(4)
-        qX = __create_unit_quaternion__(*X[0:3])
-        qZ = __create_unit_quaternion__(*X[3:6])
-        HX[0:3, 0:3] = quaternion.as_rotation_matrix(qX)
-        HZ[0:3, 0:3] = quaternion.as_rotation_matrix(qZ)
-        HX[0:3, 3] = np.reshape(X[6:9], (3,1))
-        HZ[0:3, 3] = np.reshape(X[9:12], (3,1))
-        fval = np.zeros((len(Bs), 12))
-        for i, (A, B) in enumerate(zip(As, Bs)):
-            # error = HBi - HZ*HAi*HX
-            error = HZ - B*HX*A
-            fval[i, :] = np.array(error[0:3, :]).flatten()
-        
-        return fval.flatten()
+def objRotQuaternion(X, As, Bs):
+    HX = np.matlib.identity(4)
+    HZ = np.matlib.identity(4)
+    qX = __create_unit_quaternion__(*X[0:3])
+    qZ = __create_unit_quaternion__(*X[3:6])
+    HX[0:3, 0:3] = quaternion.as_rotation_matrix(qX)
+    HZ[0:3, 0:3] = quaternion.as_rotation_matrix(qZ)
+    HX[0:3, 3] = np.reshape(X[6:9], (3,1))
+    HZ[0:3, 3] = np.reshape(X[9:12], (3,1))
+    fval = np.zeros((len(Bs), 12))
+    for i, (A, B) in enumerate(zip(As, Bs)):
+        # error = HBi - HZ*HAi*HX
+        error = HZ - B*HX*A
+        fval[i, :] = np.array(error[0:3, :]).flatten()
+    
+    return fval.flatten()
+
+def __solveXZbyQuaternion__(As, Bs):
 
     # x0 = np.random.rand(12)
     x0 = np.array([-8.98312741e-01, -5.66731629e-03,  4.64156886e+00,  2.73101774e+00,     -9.45400758e-03,  6.80454534e+00, -3.95480793e-02, -2.62769118e-03,     4.00426225e-02,  2.41447274e-01,  5.84820302e-02,  2.08623381e-03])
     lb = (-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -10, -10, -5, -10, -10, -5)
     ub = (2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 10, 10, 10, 10, 10, 10)
-    res = least_squares(objRot, x0, args=(As, Bs), method='lm',
+    res = least_squares(objRotQuaternion, x0, args=(As, Bs), method='lm',
                          verbose=2, ftol=1e-32, xtol=1e-32)
     
     # Check
@@ -78,7 +79,43 @@ def __solveXZ__(As, Bs):
     HX[0:3, 3] = np.reshape(res['x'][6:9], (3,1))
     HZ[0:3, 3] = np.reshape(res['x'][9:12], (3,1))
 
-    return HX, HZ
+    return HX, HZ, res['x']
+
+def H(x, y, z, Rx, Ry, Rz):
+    RotX = np.matrix([[1, 0, 0, 0], [0, cos(Rx), -sin(Rx), 0], [0, sin(Rx), cos(Rx), 0], [0, 0, 0, 1]])
+    RotY = np.matrix([[cos(Ry), 0, sin(Ry), 0], [0, 1, 0, 0], [-sin(Ry), 0, cos(Ry), 0], [0, 0, 0, 1]])
+    RotZ = np.matrix([[cos(Rz), -sin(Rz), 0, 0], [sin(Rz), cos(Rz), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+    P = np.matrix([[0, 0, 0, x], [0, 0, 0, y], [0, 0, 0, z], [0, 0, 0, 0]])
+    return  RotZ*RotY*RotX + P
+
+def objMatrix(X, As, Bs):
+    HX = H(X[0], X[1], X[2], X[3], X[4], X[5])
+    HZ = H(X[6], X[7], X[8], X[9], X[10], X[11])
+
+    fval = np.zeros(len(Bs))
+    for i, (A, B) in enumerate(zip(As, Bs)):
+        # error = HBi - HZ*HAi*HX
+        residual = HZ - B*HX*A
+        fval[i] = np.linalg.norm(residual, ord=2)
+    
+    return fval
+
+def __solveXZbyMatrix__(As, Bs):
+
+    x0 = np.array([-0.04, 0.0, 0.04, 0, 0, np.radians(-90), 0.255, 0.055, 0.002, 0.0, 0.0, np.radians(-90.0)])
+    x0 = np.random.rand(12)
+    r0 = np.linalg.norm(objMatrix(x0, As, Bs))
+    print('r0: {}'.format(r0))
+    lb = (-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -10, -10, -5, -10, -10, -5)
+    ub = (2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 10, 10, 10, 10, 10, 10)
+    res = least_squares(objMatrix, x0, args=(As, Bs), method='lm',
+                         verbose=2, ftol=1e-15, xtol=1e-15)
+    
+    # # Check
+    HX = H(*res['x'][0:6])
+    HZ = H(*res['x'][6:12])
+
+    return HX, HZ, res['x']
 
 def calResidual(As, Bs, X, Z):
     residual = np.zeros(len(As))
@@ -128,21 +165,22 @@ def main(DEBUG):
     HX_PATH = BASE + 'goal/HX.yaml' # optimal solution
     HZ_PATH = BASE + 'goal/HZ.yaml' # optimal solution, left-up point
 
-    As, Bs, X, Z = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH)
-    HX, HZ = __solveXZ__(As, Bs)
+    As, Bs, X0, Z0 = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH)
+    HX1, HZ1, res1 =__solveXZbyQuaternion__(As, Bs)
+    HX, HZ, res = __solveXZbyMatrix__(As, Bs)
+    rf1 = np.linalg.norm(objRotQuaternion(res1, As, Bs))
+    rf = np.linalg.norm(objMatrix(res, As, Bs))
+    print('r_final: {}'.format(rf))
 
-    r = calResidual(As, Bs, HX, HZ)
-    print(r)
-
-    pError, oError = calPositionAndOrientationError(X, HX)
-    print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
+    pError, oError = calPositionAndOrientationError(X0, HX)
+    # print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
 
     with open(HX_PATH, 'w') as f:
         yaml.dump(HX.tolist(), f, default_flow_style=False)
-        print('Save the solved X matrix to yaml data file.')
+        # print('Save the solved X matrix to yaml data file.')
     with open(HZ_PATH, 'w') as f:
         yaml.dump(HZ.tolist(), f, default_flow_style=False)
-        print('Save the solved Z matrix to yaml data file.')
+        # print('Save the solved Z matrix to yaml data file.')
 
 
 

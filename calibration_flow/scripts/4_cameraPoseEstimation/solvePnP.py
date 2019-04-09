@@ -105,9 +105,9 @@ def main(DEBUG, output_pattern_img=True):
 
     tot_error = 0
     tot_points = 0
-    for i in range(len(allCHCors)):
-        imgpoints2, _ = cv2.projectPoints(board.chessboardCorners, rvecs[i], tvecs[i], cameraMatrix, distCoeffs)
-        # tot_error += cv2.norm(imgpoints[i],imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+    for i, iCHIds in enumerate(allCHIds):
+        objpoints = board.chessboardCorners[iCHIds.flatten(), :]
+        imgpoints2, _ = cv2.projectPoints(objpoints, rvecs[i], tvecs[i], cameraMatrix, distCoeffs)
         tot_error += np.sum(np.abs(allCHCors[i] - imgpoints2)**2)
         tot_points += len(allCHCors[i]) 
         # plt.scatter(allCHCors[i][:, 0, 0], allCHCors[i][:, 0, 1], color='red')

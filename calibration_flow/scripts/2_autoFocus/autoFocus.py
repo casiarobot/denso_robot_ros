@@ -73,10 +73,10 @@ def draw_img(img, frame_name, winWidth, winheight=None, keep_aspect=True, ROI_si
         ROI = (ROI_size, ROI_size)
         draw_ROI(img, ROI_size)
 
-    cv2.namedWindow(frame_name, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(frame_name, winWidth, winheight)
-    cv2.imshow(frame_name, img)
-    cv2.waitKey(300)
+    # cv2.namedWindow(frame_name, cv2.WINDOW_NORMAL)
+    # cv2.resizeWindow(frame_name, winWidth, winheight)
+    # cv2.imshow(frame_name, img)
+    # cv2.waitKey(300)
 
 def gaus(x, a, mean, sigma):
     return a*np.exp(-(x-mean)**2 / (2*sigma**2))
@@ -164,11 +164,11 @@ def main_denso(DEBUG):
     plt.title('Auto focus')
     plt.xlabel('Len position')
     plt.ylabel('Contrast')
-    # plt.show()
-    plt.show(block=False)
-    plt.pause(0.5)
-    plt.close()
-    cv2.destroyAllWindows()
+    plt.show()
+    # plt.show(block=False)
+    # plt.pause(0.5)
+    # plt.close()
+    # cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     
@@ -183,4 +183,5 @@ if __name__ == '__main__':
     else:
         SIM = True
         DEBUG = True
+
     main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)

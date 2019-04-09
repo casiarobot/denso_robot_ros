@@ -133,17 +133,17 @@ def convert_center_ROSgoal3(dq, Init_GOAL):
     H0[1, 3] = init_goal[1]
     H0[2, 3] = init_goal[2]
     H0[0:3, 0:3] =  quaternion.as_rotation_matrix(q0)
-    print(H0[0,3], H0[1,3])
+    # print(H0[0,3], H0[1,3])
     # Center of Pattern  
     Px = H0[0, 3] + dq[0]
     Py = H0[1, 3] + dq[1]
 
-    print(Px,Py)
+    # print(Px,Py)
 
     # Flange
     Fx = Px - 0.040*cos(-dq[2])
     Fy = Py - 0.040*sin(-dq[2])
-    print(Fx,Fy)
+    # print(Fx,Fy)
 
     H =  np.array([[cos(dq[2]), -sin(dq[2]), 0.0], [sin(dq[2]), cos(dq[2]), 0.0], [0.0, 0.0, 1.0]])
     q = q0*quaternion.from_rotation_matrix(H)
@@ -176,8 +176,9 @@ def compute_compensation(BASE, IMAGE_PATH, Mpx2mm):
     dQ = Mpx2mm*dU[::-1]
     # convert unit to meter
     dq = np.array([dQ[0]/1000, dQ[1]/1000, angle]) # dx, dy, angle
-    print(ptCen)
-    print(dq)
+    print('Image center in pixel: {}'.format(ptCen))
+    print('Angle: {}'.format(np.degrees(angle)))
+    print('Compensate: {} mm'.format(dQ[0:2]))
     return dq
 
 def main_gazebo(DEBUG):
