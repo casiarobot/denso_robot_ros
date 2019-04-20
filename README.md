@@ -10,7 +10,7 @@ Introduce to ROS
   - [Contorl real Denso robot](#contorl-real-denso-robot)
     - [With Teaching Pendant](#with-teaching-pendant)
     - [With Wincap III](#with-wincap-iii)
-    - [With C](#with-c-Sharp)
+    - [With C Sharp](#with-c-harp)
     - [With ROS](#with-ros)
 
 Simulate a Denso robot in ROS environment 
