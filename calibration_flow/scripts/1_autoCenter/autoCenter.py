@@ -176,9 +176,7 @@ def compute_compensation(BASE, IMAGE_PATH, Mpx2mm):
     dQ = Mpx2mm*dU[::-1]
     # convert unit to meter
     dq = np.array([dQ[0]/1000, dQ[1]/1000, angle]) # dx, dy, angle
-    print('Image center in pixel: {}'.format(ptCen))
-    print('Angle: {}'.format(np.degrees(angle)))
-    print('Compensate: {} mm'.format(dQ[0:2]))
+    print('[AC RESULT] Image center: {0} px, Angle: {1:.2f} deg, Compensate in XY axis: ({2:.2f}, {3:.2f}) mm'.format(tuple(ptCen), np.degrees(angle), dQ[0], dQ[1]))
     return dq
 
 def main_gazebo(DEBUG):

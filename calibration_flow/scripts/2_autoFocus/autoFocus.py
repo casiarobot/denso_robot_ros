@@ -96,7 +96,7 @@ def find_peak(wd, y):
     def gaus_minus(x, a, mean, sigma):
         return -gaus(x, a, mean, sigma)
     a, mean, sigma = popt
-    x_peak = fmin(gaus_minus, x0=x[len(x)//2], args=(a, mean, sigma))[0]
+    x_peak = fmin(gaus_minus, x0=x[len(x)//2], args=(a, mean, sigma), disp=False)[0]
     peak = (x_peak, gaus(x_peak, *popt))
     return (x, gaus(x, *popt), peak)
 
@@ -139,8 +139,9 @@ def main_denso(DEBUG):
         img = img_preprocess(img0)
         contrast = CMSL(img).mean()
         ls_contrast.append(contrast)
-        print(fname)
-        print(contrast)
+        print('Contrast value of {} is {}'.format(fname[-8:], contrast))
+        # print(fname)
+        # print(contrast)
         draw_img(img, 'image', windowWidth, ROI_size=ROIsize)
         
     # Guas curve fitting and find peak locaion
@@ -149,7 +150,7 @@ def main_denso(DEBUG):
         af_goals = np.array(yaml.load(f))
     wd = af_goals[:, 2]
     x, y_hat, peak = find_peak(wd, ls_contrast)
-    print(peak)
+    print('[AF RESULT] Optimal lens position: {} m, highest contrast: {}'.format(peak[0], peak[1]))
 
     # Save best focal work distance to ros goal
     bestFocus_goals = af_goals[0, :]
@@ -183,5 +184,5 @@ if __name__ == '__main__':
     else:
         SIM = True
         DEBUG = True
-
+    
     main_gazebo(DEBUG=DEBUG) if SIM else main_denso(DEBUG=DEBUG)

@@ -15,6 +15,27 @@ def as_ROSgoal(Homo_mat):
     q = quaternion.from_rotation_matrix(Homo_mat[0:3, 0:3])
     return np.array([Homo_mat[0, 3], Homo_mat[1, 3], Homo_mat[2, 3], q.x, q.y, q.z, q.w])
 
+def holeRegister(holeID):
+    holesCoodinate = np.array([
+                    [0.025, -0.025, 0.0, 1.0],
+                    [0.025*2, -0.025, 0.0, 1.0],
+                    [0.025*3, -0.025, 0.0, 1.0],
+                    [0.025*4, -0.025, 0.0, 1.0],
+                    [0.025*5, -0.025, 0.0, 1.0],
+                    [0.025, -0.075, 0.0, 1.0],
+                    [0.025*2, -0.075, 0.0, 1.0],
+                    [0.025*3, -0.075, 0.0, 1.0], 
+                    [0.025*4, -0.075, 0.0, 1.0],
+                    [0.025*5, -0.075, 0.0, 1.0]])
+    
+    return np.matrix(holesCoodinate[holeID]).reshape(4,1)
+
+def convertToHole(Worigin, holeID):
+    Whole = np.copy(Worigin)
+    hole = holeRegister(holeID)
+    Whole[:, 3] = np.array(Worigin*hole).flatten()
+    return Whole
+
 def main(DEBUG):
     CONFIG = 'config.yaml'
     with open(CONFIG) as f:
@@ -24,26 +45,27 @@ def main(DEBUG):
     XZ_BASE = path['solveXZ'] if DEBUG else path['ROOT']
     HS_BASE = path['holeSearching'] if DEBUG else path['ROOT']
     TCP_BASE = path['TCPCalibration'] if DEBUG else path['ROOT']
-    WHole_PATH = HS_BASE + 'goal/Whole.yaml'
-    Y_PATH = TCP_BASE + 'goal/y.yaml'
+
     PIH_goal_PATH = BASE + 'goal/pih_goal.yaml'
-    Wh_PATH = HS_BASE + 'goal/Whole.yaml'
     Y_PATH = TCP_BASE + 'goal/Y.yaml'
     X_PATH = XZ_BASE + 'goal/HX.yaml'
-    with open(Wh_PATH) as f:
-        Wh = np.matrix(yaml.load(f))
+    W_PATH = HS_BASE + 'goal/HW.yaml'
+
+    with open(W_PATH) as f:
+        W = np.matrix(yaml.load(f))
     with open(Y_PATH) as f:
         Y = np.matrix(yaml.load(f))
     with open(X_PATH) as f:
         X = np.matrix(yaml.load(f))
-    Wh[1, 3] = Wh[1, 3] + 0.001
-    Wh[0, 3] = Wh[0, 3] - 0.05
+    
+    # holeID from most precision 1 to 9
+    Whole = convertToHole(W, holeID=6)
 
-    WDs = [0.04, 0.02, 0.0, -0.01, -0.02]
+    WDs = [0.04, 0.02, 0.01, 0.0, -0.01, -0.015, -0.02]
     wayposes = np.zeros((len(WDs),7))
     for i, WD in enumerate(WDs):
         C = np.matrix([[0.0, 1.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, -1.0, WD], [0.0, 0.0, 0.0, 1.0]])
-        B = Wh*np.linalg.inv(C)*np.linalg.inv(Y)
+        B = Whole*np.linalg.inv(C)*np.linalg.inv(Y)
         pih_goal = as_ROSgoal(B)
         wayposes[i] = pih_goal
 
@@ -63,7 +85,7 @@ def main(DEBUG):
     Flange.transform_by_rotation_mat(B, refFrame=Base.pose)
     Tool.transform_by_rotation_mat(Y, refFrame=Flange.pose)
     Camera.transform_by_rotation_mat(X, refFrame=Flange.pose)
-    Workpiece.transform_by_rotation_mat(Wh, refFrame=Base.pose)
+    Workpiece.transform_by_rotation_mat(Whole, refFrame=Base.pose)
 
     Base.plot_frame(ax, 'Base')
     Flange.plot_frame(ax, 'Flange')

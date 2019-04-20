@@ -92,7 +92,7 @@ def main(DEBUG, output_pattern_img=True):
         cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
         cv2.resizeWindow('frame', 1200, 800)
         cv2.imshow('frame', frame)
-        cv2.waitKey(300)
+        cv2.waitKey(30)
 
 
 
@@ -111,10 +111,10 @@ def main(DEBUG, output_pattern_img=True):
         if i < 6:
             plt.scatter(allCHCors[i][:, 0, 0], allCHCors[i][:, 0, 1], color='red')
             plt.scatter(imgpoints2[:, 0, 0], imgpoints2[:, 0, 1], color='blue')
-            # plt.show()
-            plt.show(block=False)
-            plt.pause(0.5)
-            plt.close()
+            plt.draw()
+            plt.pause(0.3)
+            plt.clf()
+ 
     mean_error = np.sqrt(tot_error/tot_points)
     print("Mean reprojection error: {0}".format(mean_error))
     # print("Final reprojection error opencv: {0}".format(retval))
@@ -124,11 +124,9 @@ def main(DEBUG, output_pattern_img=True):
 
     with open(EXTMAT, 'w') as f:
         yaml.dump(As.tolist(), f, default_flow_style=False)
-        print('Save the Extrinsic matrix to yaml data file.')
 
     with open(INTMAT, 'w') as f:
         yaml.dump(cameraMatrix.tolist(), f, default_flow_style=False)
-        print('Save the Intrinsic matrix to yaml data file.')
 
     # Data visualization
     X_PATH = AP_BASE + 'goal/X.yaml'

@@ -11,16 +11,12 @@ import yaml
 def __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH):
     with open(A_PATH) as f:
         As = np.array(yaml.load(f))
-        print('Get As from yaml file.')
     with open(B_PATH) as f:
         Bs = np.array(yaml.load(f))
-        print('Get Bs from yaml file.')
     with open(X_PATH) as f:
         X = np.array(yaml.load(f))
-        print('Get X from yaml file.')
     with open(Z_PATH) as f:
         Z = np.array(yaml.load(f))
-        print('Get Z from yaml file.')
 
     return As, Bs, X, Z
 
@@ -67,7 +63,7 @@ def __solveXZbyQuaternion__(As, Bs):
     lb = (-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -10, -10, -5, -10, -10, -5)
     ub = (2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 10, 10, 10, 10, 10, 10)
     res = least_squares(objRotQuaternion, x0, args=(As, Bs), method='lm',
-                         verbose=2, ftol=1e-32, xtol=1e-32)
+                         verbose=2, ftol=1e-15, xtol=1e-15)
     
     # Check
     HX = np.matlib.identity(4)
@@ -103,13 +99,13 @@ def objMatrix(X, As, Bs):
 def __solveXZbyMatrix__(As, Bs):
 
     x0 = np.array([-0.04, 0.0, 0.04, 0, 0, np.radians(-90), 0.255, 0.055, 0.002, 0.0, 0.0, np.radians(-90.0)])
-    x0 = np.random.rand(12)
+    # x0 = np.random.rand(12)
     r0 = np.linalg.norm(objMatrix(x0, As, Bs))
     print('r0: {}'.format(r0))
     lb = (-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -10, -10, -5, -10, -10, -5)
     ub = (2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 10, 10, 10, 10, 10, 10)
     res = least_squares(objMatrix, x0, args=(As, Bs), method='lm',
-                         verbose=2, ftol=1e-15, xtol=1e-15)
+                         verbose=1, ftol=1e-15, xtol=1e-15)
     
     # # Check
     HX = H(*res['x'][0:6])
@@ -146,8 +142,46 @@ def calPositionAndOrientationError(H, H_exact):
         oError = 360.0 - oError 
     return pError, oError
 
+
+def main_gazebo(DEBUG):
+        # PATH SETTING
+    CONFIG = 'config.yaml'
+    with open(CONFIG) as f:
+        path = yaml.load(f)
     
-def main(DEBUG):
+    BASE = path['solveXZ'] if DEBUG else path['ROOT']
+    AP_BASE = path['APose'] if DEBUG else path['ROOT']
+    PE_BASE = path['PoseEstimation'] if DEBUG else path['ROOT']
+
+    A_PATH = PE_BASE + 'goal/As.yaml'
+    B_PATH = AP_BASE + 'goal/Bs.yaml'
+    X_PATH = AP_BASE + 'goal/X.yaml' # initial guess
+    Z_PATH = AP_BASE + 'goal/Z.yaml' # initial guess, center
+
+    HX_PATH = BASE + 'goal/HX.yaml' # optimal solution
+    HZ_PATH = BASE + 'goal/HZ.yaml' # optimal solution, left-up point
+
+    As, Bs, X0, Z0 = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH)
+
+    # Quaternion base solver
+    HX1, HZ1, res1 =__solveXZbyQuaternion__(As, Bs)
+    rf1 = np.linalg.norm(objRotQuaternion(res1, As, Bs))
+    pError, oError = calPositionAndOrientationError(X0, HX1)
+
+    # Rotation matrix base solver
+    HX, HZ, res = __solveXZbyMatrix__(As, Bs)
+    rf = np.linalg.norm(objMatrix(res, As, Bs))
+    pError, oError = calPositionAndOrientationError(X0, HX)
+
+    print('r_final: {}'.format(rf))
+    print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
+
+    with open(HX_PATH, 'w') as f:
+        yaml.dump(HX.tolist(), f, default_flow_style=False)
+    with open(HZ_PATH, 'w') as f:
+        yaml.dump(HZ.tolist(), f, default_flow_style=False)
+
+def main_denso(DEBUG):
     # PATH SETTING
     CONFIG = 'config.yaml'
     with open(CONFIG) as f:
@@ -166,21 +200,23 @@ def main(DEBUG):
     HZ_PATH = BASE + 'goal/HZ.yaml' # optimal solution, left-up point
 
     As, Bs, X0, Z0 = __get_ABXZ__(A_PATH, B_PATH, X_PATH, Z_PATH)
-    HX1, HZ1, res1 =__solveXZbyQuaternion__(As, Bs)
+    
+    # Quaternion base solver
+    # HX1, HZ1, res1 =__solveXZbyQuaternion__(As, Bs)
+    # rf1 = np.linalg.norm(objRotQuaternion(res1, As, Bs))
+    
+    # Rotation matrix base solver
     HX, HZ, res = __solveXZbyMatrix__(As, Bs)
-    rf1 = np.linalg.norm(objRotQuaternion(res1, As, Bs))
     rf = np.linalg.norm(objMatrix(res, As, Bs))
     print('r_final: {}'.format(rf))
+    
 
-    pError, oError = calPositionAndOrientationError(X0, HX)
-    # print('Postion error: {} mm, Orientation error: {} degree'.format(pError*1000, oError))
+
 
     with open(HX_PATH, 'w') as f:
         yaml.dump(HX.tolist(), f, default_flow_style=False)
-        # print('Save the solved X matrix to yaml data file.')
     with open(HZ_PATH, 'w') as f:
         yaml.dump(HZ.tolist(), f, default_flow_style=False)
-        # print('Save the solved Z matrix to yaml data file.')
 
 
 
@@ -190,4 +226,4 @@ if __name__ == "__main__":
         DEBUG = sys.argv[1]
     else:
         DEBUG = True
-    main(DEBUG=DEBUG)
+    main_denso(DEBUG=DEBUG)

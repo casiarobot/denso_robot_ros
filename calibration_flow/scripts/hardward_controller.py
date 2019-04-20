@@ -203,8 +203,7 @@ class camera_shooter:
           print(e)
       else:
           if imgName is not None:
-            print("Save an image!")
-            print("filename: {}".format(imgName))
+            print("Save an image to file: {}".format(imgName))
             cv2.imwrite(imgName, cv_image)
           return cv_image
 

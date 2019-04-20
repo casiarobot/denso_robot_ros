@@ -18,8 +18,6 @@ def AutoCenter(Robot, Camera, path, SIM, DEBUG):
 
     # Initial shot
     if SIM:
-        # goal = (0.3, -0.03, 0.4, -0.0871557427476582, -0.996194698091746, 0.0, 0.0) # GAZEBO
-        # goal = (0.26, 0.0, 0.399978956713, 0.00106130271845, 0.999999396927, 0.000280212483897, 3.55297433221e-05)
         goal = (0.26, 0.00, 0.25, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
     else:
         goal = (0.209998087153, 1.11412077042e-06, 0.368260009103, -9.94506391949e-06, -0.999999997498, 5.22583013222e-06, 6.98376583036e-05)
@@ -36,7 +34,6 @@ def AutoCenter(Robot, Camera, path, SIM, DEBUG):
     subprocess.call(cmd, shell=True)
     with open(ACenter_GOAL) as f:
         goal = yaml.load(f)
-        print('Get pose goal from yaml file.')
 
     # Move to center position
     Robot.go_to_pose_goal(goal)
@@ -86,7 +83,6 @@ def AutoPose(Robot, Camera, path, SIM, DEBUG):
     subprocess.call(cmd, shell=True)
     with open(POSE_GOAL) as f:
         pose_goals = yaml.load(f)
-        print('Get pose goal from yaml file.')
 
     for ind, goal in enumerate(pose_goals):
         Robot.go_to_pose_goal(goal)
@@ -132,28 +128,56 @@ def HoleSearching(Robot, Camera, path, SIM, DEBUG):
         goal = (0.0989688762978, -0.290417812266, 0.409766763058, -0.977195181237, -0.0266658008638, 0.210581453508, 0.00582788734334)
     else:
         z = bf_goal[2] - 0.003 +0.03
-        goal = (0.11, 0.29, z, 0.0, -1.0, 0.0, 0.0)
-        # goal = (0.13, 0.314, z, 0.0, -1.0, 0.0, 0.0)
-        # goal = (0.214522443195, 0.257440181378, 0.440925534866, 0.701196313411, -0.712488543824, 0.023465310035, 0.0115405460771)
-    with open(Init_Hole_GOAL, 'w') as f:
-        yaml.dump(list(goal), f, default_flow_style=False)
+        # goal = (0.11, 0.29, z, 0.0, -1.0, 0.0, 0.0)
 
-    Robot.go_to_pose_goal(goal)
-    print("============ save as hs.bmp")
-    time.sleep(1)
-    img_name = BASE + 'img/hs.bmp'
-    image = Camera.trigger(img_name)
+
+
+        pose_goals = []
+        goal = [0.163217244712,0.228229942802,0.367965525241,0.0935280302075,-0.995616646004,2.01592105624e-05,3.68547640211e-05]
+        pose_goals.append(goal)
+        goal = [0.061473640563, 0.208917543694, 0.354116877558,-0.0926641350729, 0.986460888941, 0.0125872959326, 0.13472131473]
+        pose_goals.append(goal)
+
+        # goal = [0.181850597918,0.308169582115,0.367440610793,0.0136687233475,-0.987486828341,0.0639948089861,0.143483777052] 
+        # pose_goals.append(goal)
+        # goal = [0.0908434264658, 0.19097110602, 0.365148017157, -0.0512913589798, -0.992020313182, -0.113101934793, 0.0217450471401]
+        # pose_goals.append(goal)
+
+        # goal = [0.118789672138, 0.213762940358, 0.39300850642, -0.0480918887512, -0.9863415243, -0.156468365255, 0.0183089691618]
+        # pose_goals.append(goal)
+        # goal = [0.230162039492, 0.317407643834, 0.364465737617, -0.872774782515, -0.475225449869, 0.0933475931701, 0.0609194357517]
+        # pose_goals.append(goal)
+
+# ----------------- setting FOV
+    # with open(Init_Hole_GOAL, 'w') as f:
+    #     yaml.dump(list(pose_goals), f, default_flow_style=False)
+
+    # for ind, goal in enumerate(pose_goals):
+    #     Robot.go_to_pose_goal(goal)
+    #     rospy.sleep(1)
+    #     img_name = BASE + 'img/hs' + str(ind+1).zfill(2) + '.bmp'
+    #     image = Camera.trigger(img_name)
+
+
+    # cmd = 'python ' + path['holeSearching'] + 'holeSearching.py ' + str(DEBUG)
+    # subprocess.call(cmd, shell=True)
+
+    # cmd = 'python ' + path['holeSearching'] + 'getShootingPose.py ' + str(DEBUG)
+    # subprocess.call(cmd, shell=True)
+# ----------------- 
+
+    with open(Init_Hole_GOAL) as f:
+        goals = yaml.load(f)
+
+    # Move to center position
+    for ind, goal in enumerate(goals):
+        Robot.go_to_pose_goal(goal)
+        rospy.sleep(1)
+        img_name = BASE + 'img/hs' + str(ind+1).zfill(2) + '.bmp'
+        image = Camera.trigger(img_name)
 
     cmd = 'python ' + path['holeSearching'] + 'holeSearching.py ' + str(DEBUG)
     subprocess.call(cmd, shell=True)
-    with open(HS_GOAL) as f:
-        goal = yaml.load(f)
-        print('Get pose goal from yaml file.')
-
-    # Move to center position
-    # Robot.go_to_pose_goal(goal)
-    # time.sleep(1)
-    # image = Camera.trigger(BASE + 'img/center.bmp')
 
 
     print("============ End HoleSearching process ============") 
@@ -169,12 +193,16 @@ def PegInHole(Robot, Camera, path, SIM, DEBUG):
     PIH_GOAL = BASE + 'goal/pih_goal.yaml'
     with open(PIH_GOAL) as f:
         goals = yaml.load(f)
-
+    Robot.go_to_pose_goal(goals[0], 0.5)
+    rospy.sleep(1)
     Robot.plan_cartesian_path(goals, 0.01)
+    rospy.sleep(5)
+    
+    Robot.plan_cartesian_path(goals[-2::-1], 0.01)
    
     print("============ End Peg-in-Hole process ============")
 
-def main(SIM, DEBUG=True):
+def main(SIM, DEBUG=True): 
     # PATH SETTING
     CONFIG = 'config.yaml'
     with open(CONFIG) as f:
@@ -191,7 +219,7 @@ def main(SIM, DEBUG=True):
         # AutoPose(Robot, Camera, path, SIM, DEBUG)
         # CameraPoseEstimation(Robot, Camera, path, SIM, DEBUG)
         # SolveXZ(Robot, Camera, path, DEBUG)
-        # HoleSearching(Robot, Camera, path, SIM, DEBUG)
+        HoleSearching(Robot, Camera, path, SIM, DEBUG)
         PegInHole(Robot, Camera, path, SIM, DEBUG)
         print("============ Calibration process complete!")
     
