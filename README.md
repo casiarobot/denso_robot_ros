@@ -231,9 +231,9 @@ Basic operation
 1. Connect PC and RC8 control with ethernet cable. Then, change local IP in same LAN Network with RC8, `192.168.0.2` for example. Programming [tutorial](https://www.youtube.com/watch?v=MAyrm8Ra5kw):
 
 
-### With C#
+### With C-Sharp
 1. Install ORiN2 SDK and Visual Studio
-2. Clone the C# sample code from [here](https://github.com/solab-ntu/denso_robot_cs)
+2. Clone the C-Sharp sample code from [here](https://github.com/solab-ntu/denso_robot_cs)
 
 ### With ROS
 1. Setting up the bCap server in Denso robot, please see [here](http://wiki.ros.org/denso_robot_ros/Tutorials/How%20to%20control%20an%20RC8%20with%20MoveIt%21).
